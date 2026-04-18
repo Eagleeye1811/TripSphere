@@ -1,10 +1,12 @@
 package com.tripsphere.di
 
+import com.tripsphere.data.local.LocalHotelRepositoryImpl
 import com.tripsphere.data.remote.api.NominatimApiService
 import com.tripsphere.data.remote.api.WeatherApiService
 import com.tripsphere.data.remote.api.WikimediaApiService
 import com.tripsphere.data.remote.repository.PlacesRepositoryImpl
 import com.tripsphere.data.remote.repository.WeatherRepositoryImpl
+import com.tripsphere.domain.repository.HotelRepository
 import com.tripsphere.domain.repository.PlacesRepository
 import com.tripsphere.domain.repository.WeatherRepository
 import dagger.Module
@@ -90,4 +92,8 @@ object NetworkModule {
         wiki: WikimediaApiService,
         nominatim: NominatimApiService
     ): PlacesRepository = PlacesRepositoryImpl(wiki, nominatim)
+
+    // ── Hotels — served from local dataset (no network call needed) ───────────
+    @Provides @Singleton
+    fun provideHotelRepository(): HotelRepository = LocalHotelRepositoryImpl()
 }

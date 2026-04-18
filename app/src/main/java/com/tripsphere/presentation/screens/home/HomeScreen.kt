@@ -34,6 +34,7 @@ import coil.compose.AsyncImage
 import com.tripsphere.presentation.components.*
 import com.tripsphere.presentation.ui.theme.*
 import com.tripsphere.presentation.viewmodel.HomeViewModel
+import com.tripsphere.utils.DummyData
 import kotlinx.coroutines.delay
 
 // ─── Data models for static content ─────────────────────────────────────────
@@ -43,14 +44,6 @@ private data class HeroSlide(
     val title: String,
     val tagline: String,
     val badge: String
-)
-
-private data class Destination(
-    val name: String,
-    val country: String,
-    val imageUrl: String,
-    val rating: String,
-    val tag: String
 )
 
 private data class TravelTip(
@@ -87,13 +80,8 @@ private val heroSlides = listOf(
     )
 )
 
-private val popularDestinations = listOf(
-    Destination("Bali", "Indonesia", "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400", "4.9", "Beach"),
-    Destination("Paris", "France", "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400", "4.8", "Culture"),
-    Destination("Maldives", "South Asia", "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400", "4.9", "Luxury"),
-    Destination("New York", "USA", "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400", "4.7", "City"),
-    Destination("Kyoto", "Japan", "https://images.unsplash.com/photo-1492571350019-22de08371fd3?w=400", "4.8", "Culture")
-)
+// IDs matching DummyData: Bali=2, Paris=3, New York=4, Kyoto=5, Santorini=1, Swiss Alps=7
+private val popularDestinationIds = listOf(2, 3, 5, 1, 7)
 
 private val travelTips = listOf(
     TravelTip(Icons.Default.WbSunny, "Best Weather", "Book 3 months ahead for ideal conditions", Color(0xFFF57C00)),
@@ -125,7 +113,9 @@ fun HomeScreen(
     onNavigateToExplore: () -> Unit,
     onNavigateToCreateTrip: () -> Unit,
     onNavigateToMyTrips: () -> Unit,
+    onNavigateToHotels: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToDestinationDetail: (Int) -> Unit,
     onNavigateToActiveTrip: (Long) -> Unit,
     onNavigateToOverview: (Long) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
@@ -159,7 +149,9 @@ fun HomeScreen(
             HomeSection(title = "Quick Actions") {
                 QuickActionsRow(
                     onCreateTrip = onNavigateToCreateTrip,
-                    onMyTrips = onNavigateToMyTrips
+                    onMyTrips = onNavigateToMyTrips,
+                    onNavigateToHotels = onNavigateToHotels,
+                    onNavigateToExplore = onNavigateToExplore
                 )
             }
         }
@@ -208,6 +200,11 @@ fun HomeScreen(
 
         // ── Popular Destinations ────────────────────────────────────────────
         item {
+            val popularDests = remember {
+                DummyData.destinations
+                    .filter { it.id in popularDestinationIds }
+                    .sortedBy { popularDestinationIds.indexOf(it.id) }
+            }
             Spacer(Modifier.height(24.dp))
             HomeSectionWithAction(
                 title = "Popular Destinations",
@@ -218,8 +215,11 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     contentPadding = PaddingValues(horizontal = 20.dp)
                 ) {
-                    items(popularDestinations) { dest ->
-                        DestinationCard(destination = dest, onClick = onNavigateToExplore)
+                    items(popularDests) { dest ->
+                        DestinationCard(
+                            destination = dest,
+                            onClick = { onNavigateToDestinationDetail(dest.id) }
+                        )
                     }
                 }
             }
@@ -422,12 +422,17 @@ private data class QuickAction(
 )
 
 @Composable
-private fun QuickActionsRow(onCreateTrip: () -> Unit, onMyTrips: () -> Unit) {
+private fun QuickActionsRow(
+    onCreateTrip: () -> Unit,
+    onMyTrips: () -> Unit,
+    onNavigateToHotels: () -> Unit,
+    onNavigateToExplore: () -> Unit
+) {
     val actions = listOf(
         QuickAction(Icons.Default.AddCircle, "New Trip", Color(0xFF1565C0), Color(0xFF42A5F5)) to onCreateTrip,
         QuickAction(Icons.Default.Map, "My Trips", Color(0xFF00897B), Color(0xFF4DB6AC)) to onMyTrips,
-        QuickAction(Icons.Default.Flight, "Flights", Color(0xFF6A1B9A), Color(0xFFAB47BC)) to {},
-        QuickAction(Icons.Default.Hotel, "Hotels", Color(0xFFE65100), Color(0xFFFF8A65)) to {}
+        QuickAction(Icons.Default.Hotel, "Hotels", Color(0xFFE65100), Color(0xFFFF8A65)) to onNavigateToHotels,
+        QuickAction(Icons.Default.Explore, "Explore", Color(0xFF6A1B9A), Color(0xFFAB47BC)) to onNavigateToExplore
     )
 
     Row(
@@ -473,7 +478,7 @@ private fun QuickActionsRow(onCreateTrip: () -> Unit, onMyTrips: () -> Unit) {
 // ─── Destination Card ─────────────────────────────────────────────────────────
 
 @Composable
-private fun DestinationCard(destination: Destination, onClick: () -> Unit) {
+private fun DestinationCard(destination: com.tripsphere.domain.model.Destination, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(200.dp)
@@ -490,7 +495,6 @@ private fun DestinationCard(destination: Destination, onClick: () -> Unit) {
                     .height(240.dp),
                 contentScale = ContentScale.Crop
             )
-            // Gradient overlay
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -502,7 +506,7 @@ private fun DestinationCard(destination: Destination, onClick: () -> Unit) {
                         )
                     )
             )
-            // Tag chip
+            // Category chip
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 color = Color.White.copy(alpha = 0.22f),
@@ -511,7 +515,8 @@ private fun DestinationCard(destination: Destination, onClick: () -> Unit) {
                     .padding(10.dp)
             ) {
                 Text(
-                    text = destination.tag,
+                    text = destination.category.name.lowercase()
+                        .replaceFirstChar { it.uppercase() },
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White,
@@ -538,7 +543,7 @@ private fun DestinationCard(destination: Destination, onClick: () -> Unit) {
                     )
                     Spacer(Modifier.width(2.dp))
                     Text(
-                        text = destination.rating,
+                        text = "${"%.1f".format(destination.rating)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFF5D4037),
                         fontWeight = FontWeight.Bold

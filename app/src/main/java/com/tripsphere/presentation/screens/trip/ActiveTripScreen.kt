@@ -1,8 +1,10 @@
 package com.tripsphere.presentation.screens.trip
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +43,7 @@ fun ActiveTripScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddExpense by remember { mutableStateOf(false) }
+    var expenseToEdit by remember { mutableStateOf<Expense?>(null) }
     var selectedCategoryFilter by remember { mutableStateOf<ExpenseCategory?>(null) }
 
     LaunchedEffect(tripId) { viewModel.loadTrip(tripId) }
@@ -48,17 +52,36 @@ fun ActiveTripScreen(
 
     val trip = uiState.trip ?: return
 
+    // ── Dialogs ──────────────────────────────────────────────────────────────
+
     if (showAddExpense) {
-        AddExpenseDialog(
+        ExpenseFormDialog(
+            title = "Add Expense",
+            confirmLabel = "Add",
             onDismiss = { showAddExpense = false },
-            onAdd = { title, amount, category ->
+            onConfirm = { title, amount, category ->
                 viewModel.addExpense(tripId, title, amount, category)
                 showAddExpense = false
             }
         )
     }
 
-    // Budget warning snackbar
+    expenseToEdit?.let { editing ->
+        ExpenseFormDialog(
+            title = "Edit Expense",
+            confirmLabel = "Save",
+            initialTitle = editing.title,
+            initialAmount = "%.2f".format(editing.amount),
+            initialCategory = editing.category,
+            onDismiss = { expenseToEdit = null },
+            onConfirm = { title, amount, category ->
+                viewModel.updateExpense(editing, title, amount, category)
+                expenseToEdit = null
+            }
+        )
+    }
+
+    // ── Budget warning banner ─────────────────────────────────────────────────
     val warningLevel = uiState.budgetWarningLevel
     val snackMessage = when {
         warningLevel >= 1f -> "⚠️ Budget exceeded!"
@@ -70,7 +93,7 @@ fun ActiveTripScreen(
     Column(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
-        // Header
+        // ── Header ────────────────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -80,21 +103,27 @@ fun ActiveTripScreen(
             IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.CenterStart)) {
                 Icon(Icons.Default.ArrowBack, null, tint = Color.White)
             }
-            Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Trip Expenses", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
-                Text("${trip.destination} · ${trip.startDate.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${trip.startDate.year}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-            }
-            IconButton(onClick = { }, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Icon(Icons.Default.MoreVert, null, tint = Color.White)
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Manage Expenses",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    "${trip.destination} · ${trip.startDate.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${trip.startDate.year}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
             }
         }
 
-        // Warning banner
+        // ── Warning banner ────────────────────────────────────────────────────
         if (snackMessage != null) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Warning.copy(alpha = 0.15f)
-            ) {
+            Surface(modifier = Modifier.fillMaxWidth(), color = Warning.copy(alpha = 0.15f)) {
                 Text(
                     snackMessage,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
@@ -105,6 +134,7 @@ fun ActiveTripScreen(
             }
         }
 
+        // ── Content ───────────────────────────────────────────────────────────
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(16.dp),
@@ -134,7 +164,12 @@ fun ActiveTripScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("Total Budget", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                Text("$${"%.0f".format(trip.budget)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Text(
+                                    "$${"%.0f".format(trip.budget)}",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("Remaining", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
@@ -153,9 +188,7 @@ fun ActiveTripScreen(
 
             // Category filter chips
             item {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         FilterChip(
                             selected = selectedCategoryFilter == null,
@@ -170,7 +203,9 @@ fun ActiveTripScreen(
                     items(ExpenseCategory.values()) { cat ->
                         FilterChip(
                             selected = selectedCategoryFilter == cat,
-                            onClick = { selectedCategoryFilter = if (selectedCategoryFilter == cat) null else cat },
+                            onClick = {
+                                selectedCategoryFilter = if (selectedCategoryFilter == cat) null else cat
+                            },
                             label = { Text("${cat.emoji} ${cat.label}") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = TripBlue,
@@ -184,7 +219,11 @@ fun ActiveTripScreen(
             // Today's itinerary
             if (uiState.todayItinerary.isNotEmpty()) {
                 item {
-                    Text("Today's Itinerary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Today's Itinerary",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 items(uiState.todayItinerary) { item ->
                     Card(
@@ -207,19 +246,23 @@ fun ActiveTripScreen(
                 }
             }
 
-            // Recent expenses header
+            // Expenses header
             item {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Recent Expenses", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = { }) { Text("View Insights", color = TripBlue, style = MaterialTheme.typography.labelMedium) }
+                    Text("Expenses", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "${uiState.expenses.size} record${if (uiState.expenses.size != 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
                 }
             }
 
-            // Expense list
+            // Expense list — swipe left to delete, long-press to edit
             val filteredExpenses = if (selectedCategoryFilter != null)
                 uiState.expenses.filter { it.category == selectedCategoryFilter }
             else uiState.expenses
@@ -230,20 +273,43 @@ fun ActiveTripScreen(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No expenses yet. Tap + to add!", style = MaterialTheme.typography.bodyMedium, color = TextHint)
+                        Text(
+                            "No expenses yet. Tap + to add!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextHint
+                        )
                     }
                 }
             } else {
                 items(filteredExpenses, key = { it.id }) { expense ->
-                    ExpenseItem(
+                    SwipeableExpenseItem(
                         expense = expense,
-                        onDelete = { viewModel.deleteExpense(expense) }
+                        onDelete = { viewModel.deleteExpense(expense) },
+                        onEdit = { expenseToEdit = expense }
                     )
+                }
+            }
+
+            // CRUD hint
+            item {
+                if (filteredExpenses.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Info, null, tint = TextHint, modifier = Modifier.size(13.dp))
+                        Spacer(Modifier.width(5.dp))
+                        Text(
+                            "Swipe left to delete · Long-press to edit",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextHint
+                        )
+                    }
                 }
             }
         }
 
-        // Add expense button
+        // ── Add Expense FAB row ───────────────────────────────────────────────
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shadowElevation = 8.dp,
@@ -266,12 +332,233 @@ fun ActiveTripScreen(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Swipeable expense item (swipe-left = delete, long-press = edit)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BudgetRing(
-    spent: Double,
-    total: Double,
-    modifier: Modifier = Modifier
+private fun SwipeableExpenseItem(
+    expense: Expense,
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false
+        },
+        positionalThreshold = { it * 0.4f }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            val bgColor by animateColorAsState(
+                targetValue = when (dismissState.targetValue) {
+                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFD32F2F)
+                    else -> Color.Transparent
+                },
+                animationSpec = tween(200),
+                label = "expense_swipe_bg"
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(bgColor, RoundedCornerShape(12.dp))
+                    .padding(end = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Delete, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                        Text("Delete", color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        },
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true
+    ) {
+        ExpenseItemCard(expense = expense, onEdit = onEdit)
+    }
+}
+
+@Composable
+private fun ExpenseItemCard(expense: Expense, onEdit: () -> Unit) {
+    val categoryColors = mapOf(
+        ExpenseCategory.FOOD to Color(0xFFFF6F00),
+        ExpenseCategory.TRANSPORT to Color(0xFF1565C0),
+        ExpenseCategory.STAY to Color(0xFF6A1B9A),
+        ExpenseCategory.ACTIVITIES to Color(0xFF2E7D32),
+        ExpenseCategory.SHOPPING to Color(0xFFC62828),
+        ExpenseCategory.OTHER to Color(0xFF37474F)
+    )
+    val color = categoryColors[expense.category] ?: TripBlue
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(expense.id) {
+                detectTapGestures(onLongPress = { onEdit() })
+            },
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = color.copy(alpha = 0.12f),
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(expense.category.emoji, fontSize = 20.sp)
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(expense.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "${expense.category.label} · ${expense.date}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "-$${"%.2f".format(expense.amount)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+                // Edit hint icon
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Long-press to edit",
+                    tint = TextHint,
+                    modifier = Modifier.size(13.dp).padding(top = 2.dp)
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Unified Add / Edit dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExpenseFormDialog(
+    title: String,
+    confirmLabel: String,
+    initialTitle: String = "",
+    initialAmount: String = "",
+    initialCategory: ExpenseCategory = ExpenseCategory.FOOD,
+    onDismiss: () -> Unit,
+    onConfirm: (String, Double, ExpenseCategory) -> Unit
+) {
+    var expenseTitle by remember { mutableStateOf(initialTitle) }
+    var amount by remember { mutableStateOf(initialAmount) }
+    var selectedCategory by remember { mutableStateOf(initialCategory) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text(title, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = expenseTitle,
+                    onValueChange = { expenseTitle = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TripBlue,
+                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                    )
+                )
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    label = { Text("Amount ($)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    ),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TripBlue,
+                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                    )
+                )
+                Text("Category", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                // Category grid — 3 columns
+                val categories = ExpenseCategory.values()
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    categories.toList().chunked(3).forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row.forEach { cat ->
+                                val selected = selectedCategory == cat
+                                Surface(
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (selected) TripBlue else MaterialTheme.colorScheme.surfaceVariant,
+                                    onClick = { selectedCategory = cat }
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(cat.emoji, fontSize = 18.sp)
+                                        Text(
+                                            cat.label,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (selected) Color.White else TextSecondary
+                                        )
+                                    }
+                                }
+                            }
+                            // Fill remaining cells if row is incomplete
+                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val amt = amount.toDoubleOrNull() ?: 0.0
+                    if (expenseTitle.isNotBlank() && amt > 0) onConfirm(expenseTitle, amt, selectedCategory)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = TripAccent),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(confirmLabel, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = TextSecondary) }
+        }
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Budget ring
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun BudgetRing(spent: Double, total: Double, modifier: Modifier = Modifier) {
     val percent = if (total > 0) (spent / total).toFloat().coerceIn(0f, 1f) else 0f
     val animatedPercent by animateFloatAsState(
         targetValue = percent,
@@ -288,11 +575,6 @@ private fun BudgetRing(
         Canvas(modifier = Modifier.fillMaxSize()) {
             val stroke = 20.dp.toPx()
             val padding = stroke / 2
-            val rect = androidx.compose.ui.geometry.Rect(
-                padding, padding, size.width - padding, size.height - padding
-            )
-
-            // Background ring
             drawArc(
                 color = Color(0xFFE0E0E0),
                 startAngle = -90f,
@@ -302,7 +584,6 @@ private fun BudgetRing(
                 size = Size(size.width - stroke, size.height - stroke),
                 style = Stroke(width = stroke, cap = StrokeCap.Round)
             )
-            // Progress ring
             drawArc(
                 color = ringColor,
                 startAngle = -90f,
@@ -313,7 +594,6 @@ private fun BudgetRing(
                 style = Stroke(width = stroke, cap = StrokeCap.Round)
             )
         }
-
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 "$${"%.0f".format(spent)}",
@@ -329,124 +609,4 @@ private fun BudgetRing(
             Text("Spent", style = MaterialTheme.typography.labelSmall, color = TextHint)
         }
     }
-}
-
-@Composable
-private fun ExpenseItem(
-    expense: Expense,
-    onDelete: () -> Unit
-) {
-    val formatter = DateTimeFormatter.ofPattern("MMM d, HH:mm")
-    val categoryColors = mapOf(
-        ExpenseCategory.FOOD to Color(0xFFFF6F00),
-        ExpenseCategory.TRANSPORT to Color(0xFF1565C0),
-        ExpenseCategory.STAY to Color(0xFF6A1B9A),
-        ExpenseCategory.ACTIVITIES to Color(0xFF2E7D32),
-        ExpenseCategory.SHOPPING to Color(0xFFC62828),
-        ExpenseCategory.OTHER to Color(0xFF37474F)
-    )
-    val color = categoryColors[expense.category] ?: TripBlue
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = color.copy(alpha = 0.12f),
-                modifier = Modifier.size(40.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(expense.category.emoji, fontSize = 20.sp)
-                }
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(expense.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    "${expense.category.label} · ${expense.date}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
-            }
-            Text(
-                "-$${"%.2f".format(expense.amount)}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddExpenseDialog(
-    onDismiss: () -> Unit,
-    onAdd: (String, Double, ExpenseCategory) -> Unit
-) {
-    var title by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(ExpenseCategory.FOOD) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Expense", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Title") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Amount ($)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                    ),
-                    singleLine = true
-                )
-                // Category selector
-                Text("Category", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(ExpenseCategory.values()) { cat ->
-                        FilterChip(
-                            selected = selectedCategory == cat,
-                            onClick = { selectedCategory = cat },
-                            label = { Text("${cat.emoji} ${cat.label}", style = MaterialTheme.typography.labelSmall) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = TripBlue,
-                                selectedLabelColor = Color.White
-                            )
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val amt = amount.toDoubleOrNull() ?: 0.0
-                    if (title.isNotBlank() && amt > 0) onAdd(title, amt, selectedCategory)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = TripAccent)
-            ) { Text("Add") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = TextSecondary) }
-        }
-    )
 }

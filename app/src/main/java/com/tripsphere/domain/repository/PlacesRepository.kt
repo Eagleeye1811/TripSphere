@@ -10,4 +10,5 @@ interface PlacesRepository {
     suspend fun autocomplete(query: String, latitude: Double? = null, longitude: Double? = null): Result<List<PlaceSuggestion>>
     suspend fun getPlacePhotos(placeId: String): Result<List<String>>
     suspend fun fetchTouristPlaces(category: DestinationCategory): Result<List<Destination>>
+    suspend fun fetchDestinationPhotos(pageTitle: String): Result<List<String>>
 }

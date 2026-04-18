@@ -33,10 +33,11 @@ data class BottomNavItem(
 )
 
 val bottomNavItems = listOf(
-    BottomNavItem(Screen.Home, Icons.Default.Home, "Home"),
-    BottomNavItem(Screen.Explore, Icons.Default.Explore, "Explore"),
-    BottomNavItem(Screen.MyTrips, Icons.Default.CardTravel, "Trips"),
-    BottomNavItem(Screen.Profile, Icons.Default.Person, "Profile")
+    BottomNavItem(Screen.Home,      Icons.Default.Home,       "Home"),
+    BottomNavItem(Screen.Explore,   Icons.Default.Explore,    "Explore"),
+    BottomNavItem(Screen.MyTrips,   Icons.Default.CardTravel, "My Trips"),
+    BottomNavItem(Screen.HotelsTab, Icons.Default.Hotel,      "Hotels"),
+    BottomNavItem(Screen.Profile,   Icons.Default.Person,     "Profile")
 )
 
 @Composable

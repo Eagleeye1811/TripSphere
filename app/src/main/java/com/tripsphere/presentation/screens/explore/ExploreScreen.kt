@@ -69,7 +69,7 @@ fun ExploreScreen(
     val context = LocalContext.current
     var showShakeHint by remember { mutableStateOf(false) }
 
-    // Shake detector — register/unregister with composable lifecycle
+    // Shake to shuffle destinations
     val shakeDetector = remember { ShakeDetector(context) }
     DisposableEffect(Unit) {
         shakeDetector.register()
@@ -85,164 +85,167 @@ fun ExploreScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Background)
-    ) {
-        // ── Immersive Header ─────────────────────────────────────────────
-        ExploreHeader(
-            searchQuery = uiState.searchQuery,
-            onSearchChange = viewModel::onSearchQueryChange
-        )
-
-        // ── Category Tabs ────────────────────────────────────────────────
-        Spacer(Modifier.height(4.dp))
-        CategoryTabsRow(
-            selected = uiState.selectedCategory,
-            onSelect = { viewModel.onCategorySelected(it) }
-        )
-
-        // ── Results count + source indicator ────────────────────────────
-        val count = uiState.filteredDestinations.size
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .background(Background)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    strokeWidth = 2.dp,
-                    color = TripBlue
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "Fetching live places…",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
-                )
-            } else {
-                Text(
-                    text = "$count tourist places",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = TripBlue.copy(alpha = 0.10f),
-                modifier = Modifier.clickable { viewModel.refresh() }
+            // ── Immersive Header ─────────────────────────────────────────
+            ExploreHeader(
+                searchQuery = uiState.searchQuery,
+                onSearchChange = viewModel::onSearchQueryChange
+            )
+
+            // ── Category Tabs ────────────────────────────────────────────
+            Spacer(Modifier.height(4.dp))
+            CategoryTabsRow(
+                selected = uiState.selectedCategory,
+                onSelect = { viewModel.onCategorySelected(it) }
+            )
+
+            // ── Results count ────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Refresh, null, tint = TripBlue, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Refresh", style = MaterialTheme.typography.labelMedium, color = TripBlue, fontWeight = FontWeight.SemiBold)
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = TripBlue
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Fetching live places…",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                } else {
+                    Text(
+                        text = "${uiState.filteredDestinations.size} tourist places",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
                 }
+                Spacer(Modifier.weight(1f))
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = TripBlue.copy(alpha = 0.10f),
+                    modifier = Modifier.clickable { viewModel.refresh() }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Refresh, null, tint = TripBlue, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "Refresh",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TripBlue,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            // ── Offline / error banner ───────────────────────────────────
+            uiState.error?.let {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFFFFF3E0)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.WifiOff, null, tint = Color(0xFFE65100), modifier = Modifier.size(16.dp))
+                        Text(
+                            "Showing offline data — tap Refresh to retry",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFE65100)
+                        )
+                    }
+                }
+            }
+
+            // ── Staggered Destinations Grid ──────────────────────────────
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalItemSpacing = 12.dp,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item(span = StaggeredGridItemSpan.FullLine) { Spacer(Modifier.height(0.dp)) }
+
+                if (uiState.isLoading && uiState.filteredDestinations.isEmpty()) {
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(color = TripBlue)
+                                Spacer(Modifier.height(16.dp))
+                                Text("Loading tourist places…", color = TextSecondary)
+                            }
+                        }
+                    }
+                } else {
+                    val destinations = uiState.filteredDestinations
+                    items(destinations, key = { it.id }) { destination ->
+                        val isLarge = destinations.indexOf(destination) % 3 == 0
+                        ExploreDestinationCard(
+                            destination = destination,
+                            isLarge = isLarge,
+                            onClick = { onDestinationClick(destination.id) }
+                        )
+                    }
+                }
+
+                item(span = StaggeredGridItemSpan.FullLine) { Spacer(Modifier.height(20.dp)) }
             }
         }
 
-        // ── Error banner (shown when API failed and fallback data is used) ─
-        uiState.error?.let { errorMsg ->
+        // ── Shake hint toast ─────────────────────────────────────────────
+        AnimatedVisibility(
+            visible = showShakeHint,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 72.dp)
+        ) {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = Color(0xFFFFF3E0)
+                shape = RoundedCornerShape(20.dp),
+                color = Color.Black.copy(alpha = 0.75f)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.WifiOff, null, tint = Color(0xFFE65100), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Shuffle, null, tint = Color.White, modifier = Modifier.size(16.dp))
                     Text(
-                        "Showing offline data — tap Refresh to retry",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFE65100)
+                        "Destinations shuffled!",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
         }
-
-        // ── Staggered Grid ───────────────────────────────────────────────
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(2),
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalItemSpacing = 12.dp,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            item(span = StaggeredGridItemSpan.FullLine) { Spacer(Modifier.height(0.dp)) }
-
-            if (uiState.isLoading && uiState.filteredDestinations.isEmpty()) {
-                item(span = StaggeredGridItemSpan.FullLine) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = TripBlue)
-                            Spacer(Modifier.height(16.dp))
-                            Text("Loading tourist places…", color = TextSecondary)
-                        }
-                    }
-                }
-            } else {
-                val destinations = uiState.filteredDestinations
-                items(destinations, key = { it.id }) { destination ->
-                    val isLarge = destinations.indexOf(destination) % 3 == 0
-                    ExploreDestinationCard(
-                        destination = destination,
-                        isLarge = isLarge,
-                        onClick = { onDestinationClick(destination.id) }
-                    )
-                }
-            }
-
-            item(span = StaggeredGridItemSpan.FullLine) { Spacer(Modifier.height(20.dp)) }
-        }
     }
-
-    // Shake hint toast
-    AnimatedVisibility(
-        visible = showShakeHint,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(top = 72.dp)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = Color.Black.copy(alpha = 0.75f)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    Icons.Default.Shuffle, null,
-                    tint = Color.White, modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    "Destinations shuffled!",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-    }
-    } // end Box
 }
 
 // ─── Immersive Header with Search ─────────────────────────────────────────────
@@ -257,15 +260,12 @@ private fun ExploreHeader(
             .fillMaxWidth()
             .height(280.dp)
     ) {
-        // 1. Stunning background image
         AsyncImage(
-            model = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800", // Gorgeous landscape
+            model = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800",
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-
-        // 2. Multi-layered gradient overlay fading into the app background
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -278,15 +278,12 @@ private fun ExploreHeader(
                     )
                 )
         )
-
-        // 3. Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 56.dp, start = 20.dp, end = 20.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Section
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -318,7 +315,6 @@ private fun ExploreHeader(
                 }
             }
 
-            // Glassmorphic Search Bar
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -331,17 +327,14 @@ private fun ExploreHeader(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
                     Spacer(Modifier.width(12.dp))
                     androidx.compose.foundation.text.BasicTextField(
                         value = searchQuery,
                         onValueChange = onSearchChange,
-                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
                         cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
@@ -384,15 +377,12 @@ private fun CategoryTabsRow(
             val isSelected = tab.category == selected
             val bgColor by animateColorAsState(
                 targetValue = if (isSelected) TripBlue else Color(0xFFF0F4FF),
-                animationSpec = tween(250),
-                label = "tab_bg"
+                animationSpec = tween(250), label = "tab_bg"
             )
             val textColor by animateColorAsState(
                 targetValue = if (isSelected) Color.White else Color(0xFF6B7A99),
-                animationSpec = tween(250),
-                label = "tab_text"
+                animationSpec = tween(250), label = "tab_text"
             )
-
             Box(
                 modifier = Modifier
                     .height(40.dp)
@@ -432,7 +422,6 @@ private fun ExploreDestinationCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Box {
-            // Image
             AsyncImage(
                 model = destination.imageUrl,
                 contentDescription = destination.name,
@@ -441,8 +430,6 @@ private fun ExploreDestinationCard(
                     .height(imageHeight),
                 contentScale = ContentScale.Crop
             )
-
-            // Gradient overlay
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -454,8 +441,7 @@ private fun ExploreDestinationCard(
                         )
                     )
             )
-
-            // Rating badge — top left
+            // Rating badge
             Surface(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -467,12 +453,7 @@ private fun ExploreDestinationCard(
                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Default.Star,
-                        null,
-                        tint = Color(0xFF5D4037),
-                        modifier = Modifier.size(12.dp)
-                    )
+                    Icon(Icons.Default.Star, null, tint = Color(0xFF5D4037), modifier = Modifier.size(12.dp))
                     Spacer(Modifier.width(3.dp))
                     Text(
                         destination.rating.toString(),
@@ -482,8 +463,7 @@ private fun ExploreDestinationCard(
                     )
                 }
             }
-
-            // Like button — top right
+            // Like button
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -501,8 +481,7 @@ private fun ExploreDestinationCard(
                     modifier = Modifier.size(17.dp)
                 )
             }
-
-            // Info at bottom
+            // Info
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -518,12 +497,7 @@ private fun ExploreDestinationCard(
                 )
                 Spacer(Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        null,
-                        tint = Color.White.copy(alpha = 0.80f),
-                        modifier = Modifier.size(12.dp)
-                    )
+                    Icon(Icons.Default.LocationOn, null, tint = Color.White.copy(alpha = 0.80f), modifier = Modifier.size(12.dp))
                     Spacer(Modifier.width(3.dp))
                     Text(
                         destination.country,
@@ -532,10 +506,7 @@ private fun ExploreDestinationCard(
                     )
                 }
                 Spacer(Modifier.height(6.dp))
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color.White.copy(alpha = 0.18f)
-                ) {
+                Surface(shape = RoundedCornerShape(8.dp), color = Color.White.copy(alpha = 0.18f)) {
                     Text(
                         destination.description,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -549,4 +520,3 @@ private fun ExploreDestinationCard(
         }
     }
 }
-

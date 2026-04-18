@@ -122,4 +122,15 @@ class ActiveTripViewModel @Inject constructor(
             deleteExpenseUseCase(expense)
         }
     }
+
+    /**
+     * Update an existing expense by re-inserting it with the same id.
+     * The DAO uses OnConflictStrategy.REPLACE so this acts as an upsert.
+     */
+    fun updateExpense(original: Expense, title: String, amount: Double, category: ExpenseCategory) {
+        if (title.isBlank() || amount <= 0) return
+        viewModelScope.launch {
+            addExpenseUseCase(original.copy(title = title, amount = amount, category = category))
+        }
+    }
 }

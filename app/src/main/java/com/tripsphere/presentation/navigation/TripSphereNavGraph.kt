@@ -15,7 +15,10 @@ import com.tripsphere.presentation.screens.auth.SignUpScreen
 import com.tripsphere.presentation.screens.explore.DestinationDetailScreen
 import com.tripsphere.presentation.screens.explore.ExploreScreen
 import com.tripsphere.presentation.screens.home.HomeScreen
+import com.tripsphere.presentation.screens.hotel.HotelsHubScreen
+import com.tripsphere.presentation.screens.hotel.HotelsScreen
 import com.tripsphere.presentation.screens.mytrips.MyTripsScreen
+import com.tripsphere.presentation.screens.planner.PlannerScreen
 import com.tripsphere.presentation.screens.onboarding.OnboardingScreen
 import com.tripsphere.presentation.screens.onboarding.SplashScreen
 import com.tripsphere.presentation.screens.overview.TripOverviewScreen
@@ -114,9 +117,14 @@ fun TripSphereNavGraph(
                 onNavigateToExplore = { navController.navigate(Screen.Explore.route) },
                 onNavigateToCreateTrip = { navController.navigate(Screen.CreateTrip.createRoute()) },
                 onNavigateToMyTrips = { navController.navigate(Screen.MyTrips.route) },
+                onNavigateToHotels = { navController.navigate(Screen.HotelsTab.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToDestinationDetail = { destinationId ->
+                    navController.navigate(Screen.DestinationDetail.createRoute(destinationId))
+                },
+                // Active trip banner tapped → open the trip's overview/detail page
                 onNavigateToActiveTrip = { tripId ->
-                    navController.navigate(Screen.ActiveTrip.createRoute(tripId))
+                    navController.navigate(Screen.TripOverview.createRoute(tripId))
                 },
                 onNavigateToOverview = { tripId ->
                     navController.navigate(Screen.TripOverview.createRoute(tripId))
@@ -130,6 +138,29 @@ fun TripSphereNavGraph(
                     navController.navigate(Screen.DestinationDetail.createRoute(destinationId))
                 },
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── Planner (bottom-nav tab) ──────────────────────────────────────────
+        composable(Screen.Planner.route) {
+            PlannerScreen(
+                onStartPlanning = { destination, imageUrl ->
+                    navController.navigate(
+                        Screen.CreateTrip.createRoute(destination, imageUrl)
+                    )
+                },
+                onTripClick = { tripId ->
+                    navController.navigate(Screen.TripOverview.createRoute(tripId))
+                }
+            )
+        }
+
+        // ── Hotels hub (bottom-nav tab) ───────────────────────────────────────
+        composable(Screen.HotelsTab.route) {
+            HotelsHubScreen(
+                onCitySelected = { name, lat, lon ->
+                    navController.navigate(Screen.Hotels.createRoute(name, lat, lon))
+                }
             )
         }
 
@@ -161,6 +192,7 @@ fun TripSphereNavGraph(
                         )
                     )
                 },
+                onViewHotels  = { navController.navigate(Screen.Hotels.createRoute(destination.name, destination.latitude, destination.longitude)) },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -224,7 +256,14 @@ fun TripSphereNavGraph(
             val tripId = backStackEntry.arguments?.getLong("tripId") ?: return@composable
             TripOverviewScreen(
                 tripId = tripId,
+                // After "Start Trip" the trip is marked ONGOING; take user to My Trips
                 onNavigateToActiveTrip = {
+                    navController.navigate(Screen.MyTrips.route) {
+                        popUpTo(Screen.Home.route)
+                    }
+                },
+                // "Expenses" button opens the full expense manager for this trip
+                onNavigateToManageExpenses = {
                     navController.navigate(Screen.ActiveTrip.createRoute(tripId))
                 },
                 onNavigateBack = { navController.popBackStack() }
@@ -236,7 +275,13 @@ fun TripSphereNavGraph(
                 onTripClick = { tripId ->
                     navController.navigate(Screen.TripOverview.createRoute(tripId))
                 },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCreateTrip = {
+                    navController.navigate(Screen.CreateTrip.createRoute())
+                },
+                onStartPlanning = { destination, imageUrl ->
+                    navController.navigate(Screen.CreateTrip.createRoute(destination, imageUrl))
+                }
             )
         }
 
@@ -248,6 +293,26 @@ fun TripSphereNavGraph(
             ActiveTripScreen(
                 tripId = tripId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── Hotels ────────────────────────────────────────────────────────────
+        composable(
+            route = Screen.Hotels.route,
+            arguments = listOf(
+                navArgument("name")    { type = NavType.StringType; defaultValue = "" },
+                navArgument("lat")     { type = NavType.StringType; defaultValue = "0.0" },
+                navArgument("lon")     { type = NavType.StringType; defaultValue = "0.0" }
+            )
+        ) { backStackEntry ->
+            val name = URLDecoder.decode(backStackEntry.arguments?.getString("name") ?: "", "UTF-8")
+            val lat  = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull() ?: 0.0
+            val lon  = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull() ?: 0.0
+            HotelsScreen(
+                destinationName = name,
+                latitude        = lat,
+                longitude       = lon,
+                onNavigateBack  = { navController.popBackStack() }
             )
         }
 

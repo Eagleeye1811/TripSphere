@@ -26,6 +26,16 @@ sealed class Screen(val route: String) {
         fun createRoute(tripId: Long) = "active_trip/$tripId"
     }
     object Profile : Screen("profile")
+    object Hotels : Screen("hotels?name={name}&lat={lat}&lon={lon}") {
+        fun createRoute(name: String, lat: Double, lon: Double) =
+            "hotels?name=${java.net.URLEncoder.encode(name, "UTF-8")}&lat=$lat&lon=$lon"
+    }
+    // Standalone bottom-nav hub screen (no destination params)
+    object HotelsTab : Screen("hotels_tab")
+    // Itinerary planner entry screen
+    object Planner : Screen("planner")
 }
 
-val bottomNavScreens = listOf(Screen.Home, Screen.Explore, Screen.MyTrips, Screen.Profile)
+val bottomNavScreens = listOf(
+    Screen.Home, Screen.Explore, Screen.MyTrips, Screen.HotelsTab, Screen.Profile
+)

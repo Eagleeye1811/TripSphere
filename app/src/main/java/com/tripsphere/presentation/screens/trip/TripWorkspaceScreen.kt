@@ -3,6 +3,7 @@ package com.tripsphere.presentation.screens.trip
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,7 +29,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import com.tripsphere.data.local.Attraction
+import com.tripsphere.data.local.AttractionCategory
+import com.tripsphere.data.local.DestinationAttractionsDataset
+import com.tripsphere.domain.model.ExpenseCategory
 import com.tripsphere.domain.model.Itinerary
+import com.tripsphere.utils.DummyData
 import com.tripsphere.presentation.ui.theme.*
 import com.tripsphere.presentation.viewmodel.NearbyPlacesState
 import com.tripsphere.presentation.viewmodel.PlacesViewModel
@@ -63,6 +75,11 @@ fun TripWorkspaceScreen(
         uiState.savedTripId?.let { id ->
             onNavigateToOverview(id)
         }
+    }
+
+    // Distribute total budget across categories the first time the screen loads
+    LaunchedEffect(budget) {
+        viewModel.initializeBudget(budget)
     }
 
     Column(
@@ -136,20 +153,28 @@ fun TripWorkspaceScreen(
         // Tab content
         when (selectedTab) {
             0 -> ItineraryTab(
+                destination = destination,
                 tripDays = tripDays,
                 itineraryByDay = uiState.itineraryByDay,
                 onAddItem = { day, time, activity, notes ->
                     viewModel.addItinerary(day, time, activity, notes)
                 },
                 onRemoveItem = viewModel::removeItinerary,
-                onMoveItem = { day, item, direction -> viewModel.moveItinerary(day, item, direction) }
+                onMoveItem = { day, item, direction -> viewModel.moveItinerary(day, item, direction) },
+                onUpdateItem = { item, time, activity, notes ->
+                    viewModel.updateItinerary(item, time, activity, notes)
+                }
             )
-            1 -> ExpensePlanningTab()
+            1 -> ExpensePlanningTab(
+                totalBudget = budget,
+                allocations = uiState.expenseAllocations,
+                onUpdateAllocation = viewModel::updateExpenseAllocation
+            )
             2 -> NotesTab(
                 notes = uiState.notes,
                 onNotesChange = viewModel::updateNotes
             )
-            3 -> MapPreviewTab(destination = destination)
+            3 -> MapPreviewTab(destination = destination, itineraryByDay = uiState.itineraryByDay)
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -181,22 +206,38 @@ fun TripWorkspaceScreen(
 
 @Composable
 private fun ItineraryTab(
+    destination: String,
     tripDays: Int,
     itineraryByDay: Map<Int, List<Itinerary>>,
     onAddItem: (Int, String, String, String) -> Unit,
     onRemoveItem: (Itinerary) -> Unit,
-    onMoveItem: (Int, Itinerary, Int) -> Unit
+    onMoveItem: (Int, Itinerary, Int) -> Unit,
+    onUpdateItem: (Itinerary, String, String, String) -> Unit
 ) {
-    var showAddDialog by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     var selectedDay by remember { mutableIntStateOf(1) }
+    var editingItem by remember { mutableStateOf<Itinerary?>(null) }
 
-    if (showAddDialog) {
-        AddItineraryDialog(
+    if (showSheet) {
+        AddAttractionSheet(
+            destination = destination,
             day = selectedDay,
-            onDismiss = { showAddDialog = false },
+            existingItems = itineraryByDay[selectedDay] ?: emptyList(),
+            onDismiss = { showSheet = false },
             onAdd = { time, activity, notes ->
                 onAddItem(selectedDay, time, activity, notes)
-                showAddDialog = false
+            }
+        )
+    }
+
+    // Edit dialog
+    editingItem?.let { item ->
+        EditItineraryDialog(
+            item = item,
+            onDismiss = { editingItem = null },
+            onSave = { time, activity, notes ->
+                onUpdateItem(item, time, activity, notes)
+                editingItem = null
             }
         )
     }
@@ -204,60 +245,103 @@ private fun ItineraryTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         items(tripDays) { dayIndex ->
             val day = dayIndex + 1
             val items = itineraryByDay[day] ?: emptyList()
 
+            // Day colour accent
+            val dayColor = dayAccentColor(day)
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(2.dp)
+                elevation = CardDefaults.cardElevation(3.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column {
+                    // ── Day header bar ────────────────────────────────────────
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(dayColor.copy(alpha = 0.1f), RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            "Day $day",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TripBlue
-                        )
-                        IconButton(
-                            onClick = {
-                                selectedDay = day
-                                showAddDialog = true
-                            },
-                            modifier = Modifier.size(32.dp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(shape = RoundedCornerShape(8.dp), color = dayColor) {
+                                Text(
+                                    "Day $day",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                            if (items.isNotEmpty()) {
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "${items.size} place${if (items.size > 1) "s" else ""}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = dayColor
+                                )
+                            }
+                        }
+                        FilledTonalButton(
+                            onClick = { selectedDay = day; showSheet = true },
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = dayColor.copy(alpha = 0.15f),
+                                contentColor = dayColor
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.height(32.dp)
                         ) {
-                            Icon(Icons.Default.Add, null, tint = TripBlue)
+                            Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Add Place", style = MaterialTheme.typography.labelMedium)
                         }
                     }
 
-                    if (items.isEmpty()) {
-                        Text(
-                            "No activities yet. Tap + to add",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextHint,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    } else {
-                        items.forEachIndexed { index, item ->
-                            DraggableItineraryItem(
-                                item = item,
-                                canMoveUp = index > 0,
-                                canMoveDown = index < items.size - 1,
-                                onMoveUp = { onMoveItem(day, item, -1) },
-                                onMoveDown = { onMoveItem(day, item, 1) },
-                                onRemove = { onRemoveItem(item) }
-                            )
-                            if (index < items.size - 1) {
-                                Divider(color = TextHint.copy(alpha = 0.15f))
+                    // ── Planned items ─────────────────────────────────────────
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        if (items.isEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { selectedDay = day; showSheet = true }
+                                    .background(dayColor.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Default.AddLocationAlt, null, tint = dayColor.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "Tap to add places for Day $day",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = dayColor.copy(alpha = 0.7f)
+                                )
+                            }
+                        } else {
+                            items.forEachIndexed { index, item ->
+                                DraggableItineraryItem(
+                                    item = item,
+                                    dayColor = dayColor,
+                                    canMoveUp = index > 0,
+                                    canMoveDown = index < items.size - 1,
+                                    onMoveUp = { onMoveItem(day, item, -1) },
+                                    onMoveDown = { onMoveItem(day, item, 1) },
+                                    onRemove = { onRemoveItem(item) },
+                                    onEdit = { editingItem = item }
+                                )
+                                if (index < items.size - 1) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 36.dp),
+                                        color = TextHint.copy(alpha = 0.12f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -267,14 +351,369 @@ private fun ItineraryTab(
     }
 }
 
+// ── Add Attraction Bottom Sheet ────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddAttractionSheet(
+    destination: String,
+    day: Int,
+    existingItems: List<Itinerary>,
+    onDismiss: () -> Unit,
+    onAdd: (String, String, String) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf<AttractionCategory?>(null) }
+    var showCustomForm by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    val allAttractions = remember(destination) {
+        DestinationAttractionsDataset.getAttractionsForDestination(destination)
+    }
+    val categories = remember(allAttractions) { allAttractions.map { it.category }.distinct() }
+
+    val filtered = allAttractions.filter { a ->
+        (selectedCategory == null || a.category == selectedCategory) &&
+                (searchQuery.isBlank() || a.name.contains(searchQuery, ignoreCase = true) ||
+                        a.description.contains(searchQuery, ignoreCase = true))
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        if (showCustomForm) {
+            CustomActivityForm(
+                day = day,
+                onBack = { showCustomForm = false },
+                onAdd = { time, activity, notes ->
+                    onAdd(time, activity, notes)
+                    showCustomForm = false
+                }
+            )
+        } else {
+            Column(modifier = Modifier.fillMaxHeight(0.92f)) {
+                // ── Sheet handle & title ───────────────────────────────────────
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+                    Text(
+                        "Add to Day $day",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        destination.substringBefore(","),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Spacer(Modifier.height(12.dp))
+
+                    // ── Search ────────────────────────────────────────────────
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search places…", color = TextHint) },
+                        leadingIcon = { Icon(Icons.Default.Search, null, tint = TripBlue) },
+                        trailingIcon = {
+                            if (searchQuery.isNotBlank()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Close, null, tint = TextHint)
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TripBlue,
+                            unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                        )
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    // ── Category chips ─────────────────────────────────────────
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(end = 4.dp)
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = selectedCategory == null,
+                                onClick = { selectedCategory = null },
+                                label = { Text("All") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = TripBlue,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                        items(categories) { cat ->
+                            FilterChip(
+                                selected = selectedCategory == cat,
+                                onClick = { selectedCategory = if (selectedCategory == cat) null else cat },
+                                label = { Text("${cat.emoji} ${cat.label}") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = TripBlue,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = TextHint.copy(alpha = 0.1f))
+
+                // ── Attractions list ───────────────────────────────────────────
+                if (filtered.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.SearchOff, null, tint = TextHint, modifier = Modifier.size(40.dp))
+                            Spacer(Modifier.height(8.dp))
+                            Text("No places match your search", style = MaterialTheme.typography.bodyMedium, color = TextHint)
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(filtered) { attraction ->
+                            val alreadyAdded = existingItems.any {
+                                it.activity.equals(attraction.name, ignoreCase = true)
+                            }
+                            AttractionPickerCard(
+                                attraction = attraction,
+                                alreadyAdded = alreadyAdded,
+                                onAdd = {
+                                    if (!alreadyAdded) {
+                                        onAdd(attraction.suggestedTime, attraction.name, attraction.description)
+                                        focusManager.clearFocus()
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // ── Custom activity button ─────────────────────────────────────
+                HorizontalDivider(color = TextHint.copy(alpha = 0.1f))
+                TextButton(
+                    onClick = { showCustomForm = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                ) {
+                    Icon(Icons.Default.EditNote, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add Custom Activity", fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttractionPickerCard(
+    attraction: Attraction,
+    alreadyAdded: Boolean,
+    onAdd: () -> Unit
+) {
+    val bgColor = if (alreadyAdded) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    else MaterialTheme.colorScheme.surface
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !alreadyAdded, onClick = onAdd),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(if (alreadyAdded) 0.dp else 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Category emoji circle
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        if (alreadyAdded) TextHint.copy(alpha = 0.1f) else TripBlue.copy(alpha = 0.1f),
+                        RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(attraction.category.emoji, style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    attraction.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (alreadyAdded) TextHint else TextPrimary
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    attraction.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Time chip
+                    Surface(shape = RoundedCornerShape(6.dp), color = TripBlue.copy(alpha = 0.1f)) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Schedule, null, tint = TripBlue, modifier = Modifier.size(10.dp))
+                            Spacer(Modifier.width(3.dp))
+                            Text(attraction.suggestedTime, style = MaterialTheme.typography.labelSmall, color = TripBlue)
+                        }
+                    }
+                    // Duration chip
+                    Surface(shape = RoundedCornerShape(6.dp), color = Color(0xFFF57C00).copy(alpha = 0.1f)) {
+                        Text(
+                            "${if (attraction.durationHours % 1 == 0f) attraction.durationHours.toInt() else attraction.durationHours} hrs",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFF57C00)
+                        )
+                    }
+                    // Category chip
+                    Surface(shape = RoundedCornerShape(6.dp), color = TextHint.copy(alpha = 0.12f)) {
+                        Text(
+                            attraction.category.label,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            if (alreadyAdded) {
+                Surface(shape = RoundedCornerShape(8.dp), color = Color(0xFF388E3C).copy(alpha = 0.15f)) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Check, null, tint = Color(0xFF388E3C), modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(3.dp))
+                        Text("Added", style = MaterialTheme.typography.labelSmall, color = Color(0xFF388E3C), fontWeight = FontWeight.Bold)
+                    }
+                }
+            } else {
+                Surface(shape = RoundedCornerShape(8.dp), color = TripBlue) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(3.dp))
+                        Text("Add", style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CustomActivityForm(
+    day: Int,
+    onBack: () -> Unit,
+    onAdd: (String, String, String) -> Unit
+) {
+    var time by remember { mutableStateOf("") }
+    var activity by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxHeight(0.85f)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, null, tint = TripBlue)
+            }
+            Text("Custom Activity – Day $day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        }
+        OutlinedTextField(
+            value = time,
+            onValueChange = { time = it },
+            label = { Text("Time (e.g. 09:00 AM)") },
+            leadingIcon = { Icon(Icons.Default.Schedule, null, tint = TripBlue) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = TextHint.copy(0.4f))
+        )
+        OutlinedTextField(
+            value = activity,
+            onValueChange = { activity = it },
+            label = { Text("Place or Activity") },
+            leadingIcon = { Icon(Icons.Default.Place, null, tint = TripBlue) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = TextHint.copy(0.4f))
+        )
+        OutlinedTextField(
+            value = notes,
+            onValueChange = { notes = it },
+            label = { Text("Notes (optional)") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = TextHint.copy(0.4f))
+        )
+        Button(
+            onClick = {
+                if (time.isNotBlank() && activity.isNotBlank()) onAdd(time, activity, notes)
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(25.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = TripBlue)
+        ) {
+            Icon(Icons.Default.Add, null, tint = Color.White)
+            Spacer(Modifier.width(8.dp))
+            Text("Add to Itinerary", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+private fun dayAccentColor(day: Int): Color = when (day % 5) {
+    1    -> Color(0xFF1565C0)
+    2    -> Color(0xFFE65100)
+    3    -> Color(0xFF2E7D32)
+    4    -> Color(0xFF6A1B9A)
+    else -> Color(0xFF00695C)
+}
+
 @Composable
 private fun DraggableItineraryItem(
     item: Itinerary,
+    dayColor: Color,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    onEdit: () -> Unit
 ) {
     var dragOffsetY by remember { mutableStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
@@ -315,158 +754,315 @@ private fun DraggableItineraryItem(
         // Drag handle
         Icon(
             Icons.Default.DragHandle, null,
-            tint = if (isDragging) TripBlue else TextHint.copy(alpha = 0.5f),
+            tint = if (isDragging) dayColor else TextHint.copy(alpha = 0.5f),
             modifier = Modifier.size(20.dp).padding(end = 4.dp)
         )
 
         Surface(
             shape = RoundedCornerShape(6.dp),
-            color = TripBlue.copy(alpha = 0.12f),
+            color = dayColor.copy(alpha = 0.12f),
             modifier = Modifier.padding(end = 8.dp)
         ) {
             Text(
                 item.time,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                 style = MaterialTheme.typography.labelSmall,
-                color = TripBlue,
+                color = dayColor,
                 fontWeight = FontWeight.Bold
             )
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(item.activity, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
             if (item.notes.isNotEmpty()) {
-                Text(item.notes, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text(item.notes, style = MaterialTheme.typography.bodySmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        // Up/down arrows (visible when dragging)
+        // Up/down arrows (visible when dragging) or edit+delete buttons
         if (isDragging) {
             Column {
                 if (canMoveUp) {
-                    Icon(Icons.Default.KeyboardArrowUp, null, tint = TripBlue, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.KeyboardArrowUp, null, tint = dayColor, modifier = Modifier.size(18.dp))
                 }
                 if (canMoveDown) {
-                    Icon(Icons.Default.KeyboardArrowDown, null, tint = TripBlue, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.KeyboardArrowDown, null, tint = dayColor, modifier = Modifier.size(18.dp))
                 }
             }
         } else {
-            IconButton(onClick = onRemove, modifier = Modifier.size(28.dp)) {
-                Icon(Icons.Default.Delete, null, tint = TextHint, modifier = Modifier.size(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Default.Edit, null, tint = TripBlue.copy(alpha = 0.7f), modifier = Modifier.size(15.dp))
+                }
+                IconButton(onClick = onRemove, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Default.Delete, null, tint = TextHint, modifier = Modifier.size(15.dp))
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+// ── Edit Itinerary Dialog ──────────────────────────────────────────────────────
+
 @Composable
-private fun AddItineraryDialog(
-    day: Int,
+private fun EditItineraryDialog(
+    item: Itinerary,
     onDismiss: () -> Unit,
-    onAdd: (String, String, String) -> Unit
+    onSave: (time: String, activity: String, notes: String) -> Unit
 ) {
-    var time by remember { mutableStateOf("") }
-    var activity by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf(item.time) }
+    var activity by remember { mutableStateOf(item.activity) }
+    var notes by remember { mutableStateOf(item.notes) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Activity – Day $day", fontWeight = FontWeight.Bold) },
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.EditNote, null, tint = TripBlue, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Edit Activity", fontWeight = FontWeight.Bold)
+            }
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = time,
                     onValueChange = { time = it },
                     label = { Text("Time (e.g. 09:00 AM)") },
                     leadingIcon = { Icon(Icons.Default.Schedule, null, tint = TripBlue) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TripBlue,
+                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                    )
                 )
                 OutlinedTextField(
                     value = activity,
                     onValueChange = { activity = it },
-                    label = { Text("Activity") },
-                    leadingIcon = { Icon(Icons.Default.Event, null, tint = TripBlue) },
+                    label = { Text("Place or Activity") },
+                    leadingIcon = { Icon(Icons.Default.Place, null, tint = TripBlue) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TripBlue,
+                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                    )
                 )
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
                     label = { Text("Notes (optional)") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TripBlue,
+                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                    )
                 )
             }
         },
         confirmButton = {
             Button(
-                onClick = { if (time.isNotBlank() && activity.isNotBlank()) onAdd(time, activity, notes) },
-                colors = ButtonDefaults.buttonColors(containerColor = TripBlue)
-            ) { Text("Add") }
+                onClick = {
+                    if (time.isNotBlank() && activity.isNotBlank()) {
+                        onSave(time.trim(), activity.trim(), notes.trim())
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = TripBlue),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Save", fontWeight = FontWeight.Bold)
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = TextSecondary) }
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextSecondary)
+            }
         }
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExpensePlanningTab() {
-    val categories = listOf(
-        "🏨 Stay" to "",
-        "🍽️ Food" to "",
-        "🚗 Transport" to "",
-        "🎭 Activities" to ""
+private fun ExpensePlanningTab(
+    totalBudget: Double,
+    allocations: Map<ExpenseCategory, Double>,
+    onUpdateAllocation: (ExpenseCategory, Double) -> Unit
+) {
+    val planCategories = listOf(
+        ExpenseCategory.STAY,
+        ExpenseCategory.FOOD,
+        ExpenseCategory.TRANSPORT,
+        ExpenseCategory.ACTIVITIES
     )
-    var values by remember { mutableStateOf(categories.map { it.second }) }
+
+    // Local text-field state so typing is smooth; syncs out via onUpdateAllocation
+    var fieldValues by remember(allocations) {
+        mutableStateOf(
+            planCategories.associateWith { cat ->
+                val v = allocations[cat] ?: 0.0
+                if (v == 0.0) "" else "%.2f".format(v)
+            }
+        )
+    }
+
+    val allocatedTotal = planCategories.sumOf { allocations[it] ?: 0.0 }
+    val remaining = totalBudget - allocatedTotal
+    val usedFraction = if (totalBudget > 0) (allocatedTotal / totalBudget).coerceIn(0.0, 1.0).toFloat() else 0f
+    val barColor = when {
+        usedFraction > 1f -> Color(0xFFE53935)
+        usedFraction > 0.85f -> Color(0xFFF57C00)
+        else -> TripBlue
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // ── Header ────────────────────────────────────────────────────────
         item {
-            Text("Plan Expected Costs", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(4.dp))
-            Text("Enter estimated spending per category", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-        }
-        items(categories.size) { index ->
-            OutlinedTextField(
-                value = values[index],
-                onValueChange = { newVal ->
-                    values = values.toMutableList().also { it[index] = newVal }
-                },
-                label = { Text(categories[index].first) },
-                leadingIcon = { Icon(Icons.Default.AttachMoney, null, tint = TripBlue) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                ),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TripBlue,
-                    unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
-                )
+            Text("Budget Planner", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "Your total budget has been split across categories. Adjust as needed — changes are saved with the trip.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
             )
         }
 
-        // Total
+        // ── Overview card ────────────────────────────────────────────────
         item {
-            val total = values.sumOf { it.toDoubleOrNull() ?: 0.0 }
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = TripBlue.copy(alpha = 0.1f))
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = TripBlue.copy(alpha = 0.08f)),
+                elevation = CardDefaults.cardElevation(0.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Total Estimate", fontWeight = FontWeight.Bold, color = TripBlue)
-                    Text("$${"%.2f".format(total)}", fontWeight = FontWeight.Bold, color = TripBlue, fontSize = 18.sp)
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Total Budget", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                            Text(
+                                "$${"%.2f".format(totalBudget)}",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = TripBlue
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Remaining", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                            Text(
+                                "$${"%.2f".format(remaining)}",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = if (remaining < 0) Color(0xFFE53935) else Color(0xFF2E7D32)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        progress = { usedFraction },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(50)),
+                        color = barColor,
+                        trackColor = TextHint.copy(alpha = 0.18f)
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "$${"%.2f".format(allocatedTotal)} allocated of $${"%.2f".format(totalBudget)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary
+                    )
                 }
+            }
+        }
+
+        // ── Per-category fields ──────────────────────────────────────────
+        items(planCategories) { cat ->
+            val catFraction = if (totalBudget > 0) ((allocations[cat] ?: 0.0) / totalBudget).toFloat() else 0f
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(cat.emoji, fontSize = 20.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(cat.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        }
+                        Text(
+                            "${"%.0f".format(catFraction * 100)}%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextHint
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = fieldValues[cat] ?: "",
+                        onValueChange = { raw ->
+                            fieldValues = fieldValues.toMutableMap().also { it[cat] = raw }
+                            val parsed = raw.toDoubleOrNull() ?: 0.0
+                            onUpdateAllocation(cat, parsed)
+                        },
+                        label = { Text("Amount (USD)") },
+                        leadingIcon = { Icon(Icons.Default.AttachMoney, null, tint = TripBlue) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                        ),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TripBlue,
+                            unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                        )
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    LinearProgressIndicator(
+                        progress = { catFraction.coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(50)),
+                        color = TripBlue,
+                        trackColor = TripBlue.copy(alpha = 0.12f)
+                    )
+                }
+            }
+        }
+
+        // ── Save reminder ────────────────────────────────────────────────
+        item {
+            Spacer(Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Info, null, tint = TextHint, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "Tap \"Save Trip\" to persist your budget breakdown.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextHint
+                )
             }
         }
     }
@@ -497,13 +1093,33 @@ private fun NotesTab(notes: String, onNotesChange: (String) -> Unit) {
     }
 }
 
+// Day hue values for Google Maps colored markers
+private val dayMarkerHues = listOf(
+    com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_AZURE,   // Day 1 – Blue
+    com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_ORANGE,  // Day 2 – Orange
+    com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_GREEN,   // Day 3 – Green
+    com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_VIOLET,  // Day 4 – Purple
+    com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_YELLOW   // Day 5 – Yellow
+)
+
 @Composable
 private fun MapPreviewTab(
     destination: String,
+    itineraryByDay: Map<Int, List<Itinerary>>,
     placesViewModel: PlacesViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val nearbyState by placesViewModel.nearbyState.collectAsState()
+
+    // Resolve destination coordinates from DummyData (falls back to 20,0 if custom destination)
+    val destLatLng = remember(destination) {
+        val match = DummyData.destinations.find {
+            destination.contains(it.name, ignoreCase = true) ||
+                    it.name.contains(destination.substringBefore(",").trim(), ignoreCase = true)
+        }
+        if (match != null && (match.latitude != 0.0 || match.longitude != 0.0))
+            com.google.android.gms.maps.model.LatLng(match.latitude, match.longitude)
+        else null
+    }
 
     val locationHelper = remember {
         EntryPointAccessors.fromApplication(
@@ -512,132 +1128,227 @@ private fun MapPreviewTab(
         ).locationHelper()
     }
 
-    var userLatLng by remember { mutableStateOf<com.google.android.gms.maps.model.LatLng?>(null) }
-    val defaultLatLng = remember { com.google.android.gms.maps.model.LatLng(20.0, 78.9) }
-
     val cameraPositionState = com.google.maps.android.compose.rememberCameraPositionState {
-        position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(defaultLatLng, 13f)
+        position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
+            destLatLng ?: com.google.android.gms.maps.model.LatLng(20.0, 0.0), 12f
+        )
     }
 
-    LaunchedEffect(Unit) {
-        val loc = locationHelper.getLastKnownLocation()
-        if (loc != null) {
-            val ll = com.google.android.gms.maps.model.LatLng(loc.latitude, loc.longitude)
-            userLatLng = ll
-            cameraPositionState.position =
-                com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(ll, 14f)
-            placesViewModel.loadNearbyPlaces(loc.latitude, loc.longitude)
+    // For each itinerary item, resolve coordinates from the attractions dataset
+    val markerData: List<Triple<Int, Itinerary, Attraction?>> = remember(destination, itineraryByDay) {
+        itineraryByDay.flatMap { (day, items) ->
+            items.map { item ->
+                Triple(day, item, DestinationAttractionsDataset.findAttractionByName(destination, item.activity))
+            }
         }
     }
 
+    val hasMarkers = markerData.any { it.third != null }
+
     Column(modifier = Modifier.fillMaxSize()) {
         // ── Google Map ────────────────────────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
+        Box(modifier = Modifier.fillMaxWidth().weight(0.55f)) {
             com.google.maps.android.compose.GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
-                properties = com.google.maps.android.compose.MapProperties(isMyLocationEnabled = locationHelper.hasPermission()),
+                properties = com.google.maps.android.compose.MapProperties(
+                    isMyLocationEnabled = locationHelper.hasPermission()
+                ),
                 uiSettings = com.google.maps.android.compose.MapUiSettings(zoomControlsEnabled = true)
             ) {
-                // User location marker
-                userLatLng?.let { ll ->
+                // Destination overview marker (only when no itinerary items plotted)
+                if (!hasMarkers && destLatLng != null) {
                     com.google.maps.android.compose.Marker(
-                        state = com.google.maps.android.compose.MarkerState(position = ll),
-                        title = "You are here"
+                        state = com.google.maps.android.compose.MarkerState(position = destLatLng),
+                        title = destination.substringBefore(","),
+                        snippet = "Your trip destination"
                     )
                 }
 
-                // Nearby place markers
-                if (nearbyState is NearbyPlacesState.Success) {
-                    (nearbyState as NearbyPlacesState.Success).places.forEach { place ->
-                        if (place.latitude != 0.0 || place.longitude != 0.0) {
-                            com.google.maps.android.compose.Marker(
-                                state = com.google.maps.android.compose.MarkerState(
-                                    position = com.google.android.gms.maps.model.LatLng(
-                                        place.latitude, place.longitude
-                                    )
-                                ),
-                                title = place.name,
-                                snippet = place.category
-                            )
-                        }
+                // Itinerary markers — colored by day
+                markerData.forEach { (day, item, attraction) ->
+                    if (attraction != null) {
+                        val hue = dayMarkerHues[(day - 1) % dayMarkerHues.size]
+                        com.google.maps.android.compose.Marker(
+                            state = com.google.maps.android.compose.MarkerState(
+                                position = com.google.android.gms.maps.model.LatLng(attraction.lat, attraction.lon)
+                            ),
+                            title = item.activity,
+                            snippet = "Day $day · ${item.time}",
+                            icon = com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(hue)
+                        )
                     }
                 }
             }
 
-            // Loading overlay
-            if (nearbyState is NearbyPlacesState.Loading) {
-                CircularProgressIndicator(
+            // ── Day legend overlay ─────────────────────────────────────────
+            if (itineraryByDay.isNotEmpty()) {
+                Card(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(12.dp)
-                        .size(24.dp),
-                    strokeWidth = 2.dp,
-                    color = TripBlue
-                )
+                        .align(Alignment.TopStart)
+                        .padding(10.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.94f)),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        itineraryByDay.keys.sorted().forEach { day ->
+                            val count = itineraryByDay[day]?.size ?: 0
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(dayAccentColor(day), androidx.compose.foundation.shape.CircleShape)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    "Day $day · $count place${if (count != 1) "s" else ""}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextPrimary
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        // ── Bottom sheet: nearby places list ─────────────────────────────────
+        // ── Bottom panel: itinerary summary + route buttons ───────────────────
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Nearby Places",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                // Open in Maps deep-link
-                userLatLng?.let { ll ->
-                    TextButton(onClick = {
-                        val uri = Uri.parse("geo:${ll.latitude},${ll.longitude}?q=${Uri.encode(destination)}")
-                        val intent = Intent(Intent.ACTION_VIEW, uri).apply { setPackage("com.google.android.apps.maps") }
-                        if (intent.resolveActivity(context.packageManager) != null) context.startActivity(intent)
-                        else context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://maps.google.com/?q=${Uri.encode(destination)}")))
-                    }) {
-                        Text("Open Maps", color = TripBlue, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-
-            when (val state = nearbyState) {
-                is NearbyPlacesState.Loading -> {
-                    Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = TripBlue)
-                    }
-                }
-                is NearbyPlacesState.Error -> {
+            if (itineraryByDay.isEmpty()) {
+                // Empty state
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.Map, null, tint = TextHint, modifier = Modifier.size(36.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        state.message,
+                        "Add places in the Itinerary tab to see them mapped here",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        color = TextSecondary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
-                is NearbyPlacesState.Success -> {
-                    if (state.places.isEmpty()) {
-                        Text("No places found nearby.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                    } else {
-                        state.places.take(5).forEach { place ->
-                            NearbyPlaceRow(place)
+            } else {
+                Text(
+                    "Your Trip at a Glance",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 6.dp)
+                )
+                LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                    items(itineraryByDay.keys.sorted()) { day ->
+                        val dayItems = itineraryByDay[day] ?: emptyList()
+                        val dayColor = dayAccentColor(day)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .background(dayColor.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("$day", style = MaterialTheme.typography.labelMedium, color = dayColor, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Day $day", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    dayItems.take(2).joinToString(" · ") { it.activity } +
+                                            if (dayItems.size > 2) " +${dayItems.size - 2} more" else "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            // Route button — always visible when day has items
+                            if (dayItems.isNotEmpty()) {
+                                val routeUrl = buildMixedRouteUrl(dayItems, destination, destLatLng)
+                                TextButton(
+                                    onClick = {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse(routeUrl))
+                                        )
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Icon(Icons.Default.Navigation, null, tint = TripBlue, modifier = Modifier.size(14.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("Route", color = TripBlue, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                        if (day != itineraryByDay.keys.max()) {
+                            HorizontalDivider(color = TextHint.copy(alpha = 0.12f))
                         }
                     }
                 }
-                else -> Unit
+                Spacer(Modifier.height(8.dp))
             }
         }
+    }
+}
+
+/**
+ * Build a Google Maps Directions URL that works for every itinerary item.
+ *
+ * Items resolved from [DestinationAttractionsDataset] use precise lat/lon.
+ * Custom activities fall back to a "Name, Destination" text search so that
+ * Google Maps still finds a reasonable location.
+ */
+private fun buildMixedRouteUrl(
+    items: List<Itinerary>,
+    destination: String,
+    fallbackLatLng: com.google.android.gms.maps.model.LatLng?
+): String {
+    if (items.isEmpty()) return "https://maps.google.com"
+
+    fun pointFor(item: Itinerary): String {
+        val attraction = DestinationAttractionsDataset.findAttractionByName(destination, item.activity)
+        return if (attraction != null) {
+            "${attraction.lat},${attraction.lon}"
+        } else {
+            Uri.encode("${item.activity}, $destination")
+        }
+    }
+
+    // If only one item, open it directly in Google Maps search
+    if (items.size == 1) {
+        val attraction = DestinationAttractionsDataset.findAttractionByName(destination, items[0].activity)
+        return if (attraction != null) {
+            "https://www.google.com/maps/search/?api=1&query=${attraction.lat},${attraction.lon}"
+        } else {
+            "https://www.google.com/maps/search/?api=1&query=${Uri.encode("${items[0].activity}, $destination")}"
+        }
+    }
+
+    val origin = pointFor(items.first())
+    val dest = pointFor(items.last())
+    val waypoints = if (items.size > 2) {
+        items.subList(1, items.size - 1).joinToString("|") { pointFor(it) }
+    } else ""
+
+    return buildString {
+        append("https://www.google.com/maps/dir/?api=1")
+        append("&origin=$origin")
+        append("&destination=$dest")
+        if (waypoints.isNotEmpty()) append("&waypoints=$waypoints")
+        append("&travelmode=walking")
     }
 }
 

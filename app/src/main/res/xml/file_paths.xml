@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Covers files created inside context.filesDir (internal storage) -->
+    <files-path name="my_photos" path="." />
+    <!-- Covers files in the external cache directory -->
+    <external-cache-path name="external_cache" path="." />
+</paths>

@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
                     Screen.Home.route,
                     Screen.Explore.route,
                     Screen.MyTrips.route,
+                    Screen.HotelsTab.route,
                     Screen.Profile.route
                 )
                 val showBottomBar = currentRoute in bottomBarRoutes

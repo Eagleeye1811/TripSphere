@@ -113,15 +113,79 @@ class PlacesRepositoryImpl @Inject constructor(
                         imageUrl  = page.thumbnail?.source ?: "",
                         category  = category.takeIf { it != DestinationCategory.ALL }
                             ?: inferDestinationCategory(title),
-                        bestTimeToVisit = "Year-round",
-                        budgetEstimate  = "\$\$",
-                        rating          = 4.5f,
+                        bestTimeToVisit = bestTimeForCategory(category),
+                        budgetEstimate  = estimateBudget(page.pageId, category),
+                        rating          = deriveRating(page.pageId),
                         topAttractions  = emptyList(),
                         latitude  = coord?.lat ?: 0.0,
                         longitude = coord?.lon ?: 0.0
                     )
                 }
         }
+
+    override suspend fun fetchDestinationPhotos(pageTitle: String): Result<List<String>> =
+        runCatching {
+            val response = wikiApi.getPageImages(titles = pageTitle)
+            val excludeKeywords = listOf(
+                "icon", "flag", "logo", "coat", "seal", "map", "symbol",
+                "button", "arrow", "diagram", "locator", "location", "portal",
+                "commons-logo", "wikidata", "wikisource", "wikipedia"
+            )
+            response.query?.pages?.values
+                ?.filter { page ->
+                    val t = page.title.lowercase()
+                    (t.endsWith(".jpg") || t.endsWith(".jpeg") || t.endsWith(".png")) &&
+                        excludeKeywords.none { t.contains(it) }
+                }
+                ?.mapNotNull { page ->
+                    page.imageInfo.firstOrNull()?.url?.takeIf { it.isNotBlank() }
+                }
+                ?.take(8)
+                ?: emptyList()
+        }
+
+    /**
+     * Derives a per-day budget range from the Wikipedia page ID so that every
+     * destination gets a different but stable price, within a realistic band
+     * for its category.
+     *
+     * Formula: use two different remainders of the page ID to get independent
+     * low and high values, then round to the nearest $5 for a natural look.
+     */
+    private fun estimateBudget(pageId: Long, category: DestinationCategory): String {
+        val (minFloor, minCeil, spread) = when (category) {
+            DestinationCategory.BEACH     -> Triple(30,  150, 80)
+            DestinationCategory.MOUNTAIN  -> Triple(50,  200, 100)
+            DestinationCategory.CITY      -> Triple(40,  220, 120)
+            DestinationCategory.ADVENTURE -> Triple(60,  250, 130)
+            DestinationCategory.ALL       -> Triple(35,  180, 90)
+        }
+        val seed = pageId.toInt().let { if (it < 0) -it else it }
+        // Low end: minFloor..minCeil, rounded to nearest $5
+        val low  = ((minFloor + (seed % (minCeil - minFloor))) / 5) * 5
+        // High end: low + (20..spread), rounded to nearest $5
+        val high = ((low + 20 + ((seed / 100) % (spread - 20))) / 5) * 5
+        return "\$$low–\$$high/day"
+    }
+
+    /**
+     * Derives a varied star rating (4.0–5.0) from the page ID so destinations
+     * don't all show the same 4.5.
+     */
+    private fun deriveRating(pageId: Long): Float {
+        val seed = pageId.toInt().let { if (it < 0) -it else it }
+        // Ratings in steps of 0.1 from 4.0 to 5.0 → 11 possible values
+        val steps = seed % 11
+        return (40 + steps) / 10f
+    }
+
+    private fun bestTimeForCategory(category: DestinationCategory) = when (category) {
+        DestinationCategory.BEACH     -> "Nov – Apr"
+        DestinationCategory.MOUNTAIN  -> "Jun – Sep"
+        DestinationCategory.CITY      -> "Year-round"
+        DestinationCategory.ADVENTURE -> "Mar – Oct"
+        DestinationCategory.ALL       -> "Year-round"
+    }
 
     private fun categorySearchQuery(category: DestinationCategory) = when (category) {
         DestinationCategory.ALL       -> "famous tourist destination travel"

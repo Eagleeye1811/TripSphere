@@ -24,6 +24,13 @@ sealed class NearbyPlacesState {
     data class Error(val message: String) : NearbyPlacesState()
 }
 
+sealed class PhotosState {
+    object Idle : PhotosState()
+    object Loading : PhotosState()
+    data class Success(val urls: List<String>) : PhotosState()
+    object Empty : PhotosState()
+}
+
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class PlacesViewModel @Inject constructor(
@@ -32,6 +39,9 @@ class PlacesViewModel @Inject constructor(
 
     private val _nearbyState = MutableStateFlow<NearbyPlacesState>(NearbyPlacesState.Idle)
     val nearbyState: StateFlow<NearbyPlacesState> = _nearbyState.asStateFlow()
+
+    private val _photosState = MutableStateFlow<PhotosState>(PhotosState.Idle)
+    val photosState: StateFlow<PhotosState> = _photosState.asStateFlow()
 
     private val _suggestions = MutableStateFlow<List<PlaceSuggestion>>(emptyList())
     val suggestions: StateFlow<List<PlaceSuggestion>> = _suggestions.asStateFlow()
@@ -67,6 +77,19 @@ class PlacesViewModel @Inject constructor(
                         else e.message ?: "Failed to load nearby places"
                     )
                 }
+        }
+    }
+
+    fun loadDestinationPhotos(pageTitle: String) {
+        if (pageTitle.isBlank()) return
+        viewModelScope.launch {
+            _photosState.value = PhotosState.Loading
+            placesRepository.fetchDestinationPhotos(pageTitle)
+                .onSuccess { urls ->
+                    _photosState.value = if (urls.isEmpty()) PhotosState.Empty
+                                         else PhotosState.Success(urls)
+                }
+                .onFailure { _photosState.value = PhotosState.Empty }
         }
     }
 

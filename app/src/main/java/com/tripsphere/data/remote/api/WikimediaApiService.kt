@@ -59,6 +59,22 @@ interface WikimediaApiService {
         @Query("format")      format: String = "json"
     ): WikiSearchDestinationsResponse
 
+    /**
+     * Fetch multiple images for a Wikipedia page using generator=images.
+     * Returns up to [limit] image URLs (filtered to JPG/PNG by the repository).
+     */
+    @GET("w/api.php")
+    suspend fun getPageImages(
+        @Query("action")    action: String = "query",
+        @Query("titles")    titles: String,
+        @Query("generator") generator: String = "images",
+        @Query("gimlimit")  limit: Int = 12,
+        @Query("prop")      prop: String = "imageinfo",
+        @Query("iiprop")    iiProp: String = "url",
+        @Query("iiurlwidth") urlWidth: Int = 600,
+        @Query("format")    format: String = "json"
+    ): WikiPageImagesResponse
+
     /** Get thumbnail image for a known place name (used for destination photos). */
     @GET("w/api.php")
     suspend fun getPlacePhoto(
@@ -149,4 +165,24 @@ data class WikiSearchPage(
 data class WikiCoordinate(
     @SerializedName("lat")  val lat: Double = 0.0,
     @SerializedName("lon")  val lon: Double = 0.0
+)
+
+// ── Page images response (generator=images) ───────────────────────────────────
+
+data class WikiPageImagesResponse(
+    @SerializedName("query") val query: WikiPageImagesQuery? = null
+)
+
+data class WikiPageImagesQuery(
+    @SerializedName("pages") val pages: Map<String, WikiImagePage> = emptyMap()
+)
+
+data class WikiImagePage(
+    @SerializedName("title")     val title: String = "",
+    @SerializedName("imageinfo") val imageInfo: List<WikiImageInfo> = emptyList()
+)
+
+data class WikiImageInfo(
+    @SerializedName("url")      val url: String = "",
+    @SerializedName("thumburl") val thumbUrl: String = ""
 )
