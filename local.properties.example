@@ -1,0 +1,20 @@
+# Copy this file to local.properties and fill in your keys.
+# local.properties is gitignored — never commit real keys.
+
+sdk.dir=/Users/your-name/Library/Android/sdk
+
+# ── Google Maps API Key ───────────────────────────────────────────────────────
+# Get from: Google Cloud Console → APIs & Services → Credentials → API Key
+# Enable:   Maps SDK for Android
+# Restrict: Package = com.tripsphere, SHA-1 (run ./gradlew signingReport)
+GOOGLE_MAPS_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# ── Google Web Client ID (Firebase / Google Sign-In) ─────────────────────────
+# Get from: Firebase Console → Project Settings → Your Apps
+#           → Select the WEB app → OAuth 2.0 Client ID
+GOOGLE_WEB_CLIENT_ID=000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+
+# ── HERE Places API Key ───────────────────────────────────────────────────────
+# Get from: https://developer.here.com → Projects → Create App → Generate API Key
+# Free tier: 250,000 calls/month, no billing required
+HERE_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

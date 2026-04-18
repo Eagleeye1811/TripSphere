@@ -1,0 +1,14 @@
+# Android
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+app/build/
+app/google-services.json
+
+# Keys — never commit
+*.keystore
+*.jks

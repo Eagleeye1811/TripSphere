@@ -1,0 +1,13 @@
+<resources>
+    <!-- Base application theme -->
+    <style name="Theme.TripSphere" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Splash screen theme -->
+    <style name="Theme.TripSphere.SplashScreen" parent="Theme.TripSphere">
+        <item name="android:windowSplashScreenBackground">#0D47A1</item>
+        <item name="postSplashScreenTheme">@style/Theme.TripSphere</item>
+    </style>
+</resources>
