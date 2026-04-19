@@ -48,6 +48,7 @@ interface WikimediaApiService {
         @Query("generator")   generator: String = "search",
         @Query("gsrsearch")   query: String,
         @Query("gsrlimit")    limit: Int = 50,
+        @Query("gsroffset")   offset: Int = 0,
         @Query("prop")        prop: String = "pageimages|extracts|coordinates",
         @Query("exintro")     exIntro: Int = 1,
         @Query("exchars")     exChars: Int = 250,

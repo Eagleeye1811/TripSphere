@@ -8,6 +8,9 @@ import com.tripsphere.domain.model.DestinationCategory
 import com.tripsphere.domain.model.Place
 import com.tripsphere.domain.model.PlaceSuggestion
 import com.tripsphere.domain.repository.PlacesRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -94,16 +97,24 @@ class PlacesRepositoryImpl @Inject constructor(
     override suspend fun fetchTouristPlaces(category: DestinationCategory): Result<List<Destination>> =
         runCatching {
             val query = categorySearchQuery(category)
-            val response = wikiApi.searchDestinations(query = query, limit = 50)
-            val pages = response.query?.pages?.values ?: emptyList()
 
-            pages
+            // Fetch two pages of 50 in parallel and merge, giving up to 100 results.
+            val (resp1, resp2) = coroutineScope {
+                val a = async { wikiApi.searchDestinations(query = query, limit = 50, offset = 0) }
+                val b = async { wikiApi.searchDestinations(query = query, limit = 50, offset = 50) }
+                a.await() to b.await()
+            }
+            val pages = buildMap {
+                resp1.query?.pages?.let { putAll(it) }
+                resp2.query?.pages?.let { putAll(it) } // deduplicates by page ID key
+            }.values
+
+            val mapped = pages
                 .filter { it.thumbnail != null && !it.extract.isNullOrBlank() }
-                .sortedByDescending { it.coordinates.firstOrNull()?.lat ?: 0.0 } // keeps variety
+                .sortedByDescending { it.coordinates.firstOrNull()?.lat ?: 0.0 }
                 .map { page ->
                     val coord = page.coordinates.firstOrNull()
                     val title = page.title
-                    // Split "Place, Country" titles for cleaner display
                     val parts = title.split(",").map { it.trim() }
                     Destination(
                         id        = page.pageId.toInt(),
@@ -121,6 +132,27 @@ class PlacesRepositoryImpl @Inject constructor(
                         longitude = coord?.lon ?: 0.0
                     )
                 }
+
+            // Geocode destinations that Wikipedia didn't supply coordinates for.
+            // All requests run in parallel so there is no sequential delay.
+            coroutineScope {
+                mapped.map { dest ->
+                    async {
+                        if (dest.latitude == 0.0 && dest.longitude == 0.0) {
+                            val geocodeQuery = if (dest.country.isNotBlank())
+                                "${dest.name}, ${dest.country}" else dest.name
+                            val hit = runCatching {
+                                nominatimApi.search(query = geocodeQuery, limit = 1).firstOrNull()
+                            }.getOrNull()
+                            if (hit != null) {
+                                val lat = hit.lat.toDoubleOrNull() ?: 0.0
+                                val lon = hit.lon.toDoubleOrNull() ?: 0.0
+                                dest.copy(latitude = lat, longitude = lon)
+                            } else dest
+                        } else dest
+                    }
+                }.awaitAll()
+            }
         }
 
     override suspend fun fetchDestinationPhotos(pageTitle: String): Result<List<String>> =
