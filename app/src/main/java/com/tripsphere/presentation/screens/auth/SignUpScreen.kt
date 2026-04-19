@@ -50,7 +50,8 @@ fun SignUpScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val bgColor = Color(0xFF090D18)
+    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -103,7 +104,7 @@ fun SignUpScreen(
                     Text(
                         "Start your travel journey today",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
 

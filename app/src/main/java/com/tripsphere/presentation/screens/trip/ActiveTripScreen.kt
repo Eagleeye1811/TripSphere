@@ -163,16 +163,16 @@ fun ActiveTripScreen(
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Total Budget", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text("Total Budget", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(
                                     "$${"%.0f".format(trip.budget)}",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Remaining", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text("Remaining", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 val remaining = trip.budget - uiState.totalSpent
                                 Text(
                                     "$${"%.0f".format(remaining.coerceAtLeast(0.0))}",
@@ -576,7 +576,7 @@ private fun BudgetRing(spent: Double, total: Double, modifier: Modifier = Modifi
             val stroke = 20.dp.toPx()
             val padding = stroke / 2
             drawArc(
-                color = Color(0xFFE0E0E0),
+                color = Color(0xFF1E2538),
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
@@ -599,7 +599,7 @@ private fun BudgetRing(spent: Double, total: Double, modifier: Modifier = Modifi
                 "$${"%.0f".format(spent)}",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 "${(percent * 100).toInt()}% of budget",

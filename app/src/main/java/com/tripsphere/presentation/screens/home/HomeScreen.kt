@@ -130,7 +130,7 @@ fun HomeScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background),
+            .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(bottom = 32.dp)
     ) {
 
@@ -429,10 +429,10 @@ private fun QuickActionsRow(
     onNavigateToExplore: () -> Unit
 ) {
     val actions = listOf(
-        QuickAction(Icons.Default.AddCircle, "New Trip", Color(0xFF1565C0), Color(0xFF42A5F5)) to onCreateTrip,
-        QuickAction(Icons.Default.Map, "My Trips", Color(0xFF00897B), Color(0xFF4DB6AC)) to onMyTrips,
-        QuickAction(Icons.Default.Hotel, "Hotels", Color(0xFFE65100), Color(0xFFFF8A65)) to onNavigateToHotels,
-        QuickAction(Icons.Default.Explore, "Explore", Color(0xFF6A1B9A), Color(0xFFAB47BC)) to onNavigateToExplore
+        QuickAction(Icons.Default.AddCircle, "New Trip", Color(0xFF1565C0), Color(0xFF1976D2)) to onCreateTrip,
+        QuickAction(Icons.Default.Map, "My Trips", Color(0xFF00695C), Color(0xFF00897B)) to onMyTrips,
+        QuickAction(Icons.Default.Hotel, "Hotels", Color(0xFFBF360C), Color(0xFFE64A19)) to onNavigateToHotels,
+        QuickAction(Icons.Default.Explore, "Explore", Color(0xFF4A148C), Color(0xFF6A1B9A)) to onNavigateToExplore
     )
 
     Row(
@@ -468,7 +468,7 @@ private fun QuickActionsRow(
                     text = action.label,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
         }
@@ -670,7 +670,7 @@ private fun TravelTipCard(tip: TravelTip) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(20.dp),
@@ -680,7 +680,7 @@ private fun TravelTipCard(tip: TravelTip) {
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(tip.color.copy(alpha = 0.12f)),
+                    .background(tip.color.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(tip.icon, contentDescription = null, tint = tip.color, modifier = Modifier.size(28.dp))
@@ -691,13 +691,13 @@ private fun TravelTipCard(tip: TravelTip) {
                     text = tip.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = tip.desc,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -853,13 +853,13 @@ private fun EmptyTripState(onCreateTrip: () -> Unit) {
             text = "No trips yet",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(Modifier.height(8.dp))
         Text(
             text = "Start planning your first adventure and explore the world!",
             style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(Modifier.height(24.dp))
@@ -870,29 +870,18 @@ private fun EmptyTripState(onCreateTrip: () -> Unit) {
                 .height(54.dp),
             shape = RoundedCornerShape(27.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent
-            ),
-            contentPadding = PaddingValues(0.dp)
+                containerColor = TripBlue
+            )
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.linearGradient(listOf(TripBlueDark, TripBlue, TripAccent)),
-                        RoundedCornerShape(27.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.AddCircle, null, tint = Color.White, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Plan My First Trip",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AddCircle, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Plan My First Trip",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         }
     }
@@ -907,7 +896,7 @@ private fun HomeSection(title: String, content: @Composable () -> Unit) {
             text = title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 0.dp)
         )
         Spacer(Modifier.height(14.dp))
@@ -934,7 +923,7 @@ private fun HomeSectionWithAction(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onBackground
             )
             TextButton(onClick = onAction) {
                 Text(

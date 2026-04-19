@@ -426,7 +426,7 @@ fun DestinationDetailScreen(
                                 ) {
                                     Icon(Icons.Default.Place, null, tint = TripAccent, modifier = Modifier.size(20.dp))
                                     Spacer(Modifier.width(8.dp))
-                                    Text(name, style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
+                                    Text(name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                                 }
                                 Divider(color = TextHint.copy(alpha = 0.2f))
                             }
@@ -760,7 +760,7 @@ private fun WeatherCard(weatherState: WeatherUiState) {
                             "${w.temperature}°C · ${w.description}",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             "Wind ${w.windspeed} km/h · ${if (w.isDay) "Daytime" else "Night"}",

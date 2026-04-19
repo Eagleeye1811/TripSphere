@@ -62,7 +62,7 @@ fun TripSphereBottomBar(
                     ambientColor = TripBlue.copy(alpha = 0.05f) 
                 )
                 .background(
-                    color = Color.White.copy(alpha = 0.95f),
+                    color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(32.dp)
                 )
                 .padding(horizontal = 8.dp, vertical = 12.dp),

@@ -186,7 +186,7 @@ fun HotelsScreen(
             modifier     = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Background)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             when {
                 uiState.isLoading && uiState.hotels.isEmpty() -> {

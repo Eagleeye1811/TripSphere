@@ -1,13 +1,15 @@
 <resources>
-    <!-- Base application theme -->
+    <!-- Base application theme — dark background to avoid white flash on launch -->
     <style name="Theme.TripSphere" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">#090D18</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <!-- Splash screen theme -->
     <style name="Theme.TripSphere.SplashScreen" parent="Theme.TripSphere">
-        <item name="android:windowSplashScreenBackground">#0D47A1</item>
+        <item name="android:windowSplashScreenBackground">#090D18</item>
         <item name="postSplashScreenTheme">@style/Theme.TripSphere</item>
     </style>
 </resources>

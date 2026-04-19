@@ -100,7 +100,8 @@ fun LoginScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val bgColor = Color(0xFF090D18)
+    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
         // Top gradient header
         Box(
             modifier = Modifier
@@ -152,7 +153,7 @@ fun LoginScreen(
                         text = "Welcome Back",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Log in to plan your next adventure",
@@ -171,10 +172,10 @@ fun LoginScreen(
                             .height(52.dp),
                         shape = RoundedCornerShape(26.dp),
                         border = androidx.compose.foundation.BorderStroke(
-                            1.5.dp, Color(0xFFDADCE0)
+                            1.5.dp, MaterialTheme.colorScheme.outline
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         enabled = authState !is AuthState.Loading
                     ) {
@@ -187,7 +188,7 @@ fun LoginScreen(
                             Spacer(Modifier.width(10.dp))
                             Text(
                                 text = "Continue with Google",
-                                color = Color(0xFF3C4043),
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 15.sp
                             )

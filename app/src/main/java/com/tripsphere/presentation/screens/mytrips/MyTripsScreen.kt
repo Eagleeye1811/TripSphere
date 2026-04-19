@@ -137,7 +137,7 @@ fun MyTripsScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         shadowElevation = 8.dp
                     ) {
                         Row(
@@ -205,7 +205,7 @@ fun MyTripsScreen(
                             .padding(horizontal = 20.dp)
                             .padding(top = 8.dp)
                             .shadow(8.dp, RoundedCornerShape(16.dp))
-                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                             .padding(vertical = 8.dp)
                     ) {
                         suggestions.forEach { dest ->
@@ -251,7 +251,7 @@ fun MyTripsScreen(
                         "Popular Destinations",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         "Tap to start planning instantly",
@@ -294,7 +294,7 @@ fun MyTripsScreen(
                         "My Itineraries",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         "${allTrips.size} total",
@@ -379,7 +379,7 @@ fun MyTripsScreen(
                         "No itineraries yet",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(

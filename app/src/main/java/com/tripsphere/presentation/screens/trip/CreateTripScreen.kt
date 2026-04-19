@@ -157,10 +157,10 @@ fun CreateTripScreen(
                     shape = RoundedCornerShape(14.dp),
                     enabled = false,
                     colors = OutlinedTextFieldDefaults.colors(
-                        disabledBorderColor = TextHint.copy(alpha = 0.5f),
-                        disabledTextColor = TextPrimary,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
                         disabledLeadingIconColor = TripBlue,
-                        disabledLabelColor = TextSecondary
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
 
@@ -179,10 +179,10 @@ fun CreateTripScreen(
                     shape = RoundedCornerShape(14.dp),
                     enabled = false,
                     colors = OutlinedTextFieldDefaults.colors(
-                        disabledBorderColor = TextHint.copy(alpha = 0.5f),
-                        disabledTextColor = TextPrimary,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
                         disabledLeadingIconColor = TripBlue,
-                        disabledLabelColor = TextSecondary
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }

@@ -86,11 +86,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(TripBlueDark, TripBlue, Color(0xFF1E88E5))
-                )
-            ),
+            .background(Color(0xFF090D18)),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -100,10 +96,10 @@ fun SplashScreen(
             // Logo
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(104.dp)
                     .scale(scale)
                     .background(
-                        Color.White.copy(alpha = 0.15f),
+                        Color(0xFF1565C0).copy(alpha = 0.18f),
                         shape = androidx.compose.foundation.shape.CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -111,8 +107,8 @@ fun SplashScreen(
                 Icon(
                     imageVector = Icons.Default.TravelExplore,
                     contentDescription = "TripSphere Logo",
-                    modifier = Modifier.size(56.dp),
-                    tint = Color.White
+                    modifier = Modifier.size(58.dp),
+                    tint = Color(0xFF2979FF)
                 )
             }
 
@@ -122,7 +118,7 @@ fun SplashScreen(
                 text = "TripSphere",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
+                color = Color(0xFFE4E8F5),
                 modifier = Modifier.scale(scale)
             )
 
@@ -132,7 +128,7 @@ fun SplashScreen(
                 text = "PLAN · TRAVEL · REMEMBER",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White.copy(alpha = 0.7f),
+                color = Color(0xFF9BAAC4),
                 letterSpacing = 4.sp,
                 textAlign = TextAlign.Center
             )
@@ -142,7 +138,7 @@ fun SplashScreen(
             Text(
                 text = "Loading your journey...",
                 fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.6f),
+                color = Color(0xFF9BAAC4),
                 modifier = Modifier.alpha(alpha)
             )
 
@@ -153,8 +149,8 @@ fun SplashScreen(
                     .width(120.dp)
                     .height(2.dp)
                     .alpha(alpha),
-                color = Color.White.copy(alpha = 0.8f),
-                trackColor = Color.White.copy(alpha = 0.3f)
+                color = Color(0xFF2979FF),
+                trackColor = Color(0xFF1E2538)
             )
         }
     }

@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            TripSphereTheme {
+            TripSphereTheme(darkTheme = true) {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route

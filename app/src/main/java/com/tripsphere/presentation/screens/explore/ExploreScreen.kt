@@ -88,7 +88,7 @@ fun ExploreScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Background)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // ── Immersive Header ─────────────────────────────────────────
             ExploreHeader(
@@ -127,7 +127,7 @@ fun ExploreScreen(
                         text = "${uiState.filteredDestinations.size} tourist places",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 Spacer(Modifier.weight(1f))
@@ -159,18 +159,18 @@ fun ExploreScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
                     shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFFFFF3E0)
+                    color = Color(0xFF3D2010)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.WifiOff, null, tint = Color(0xFFE65100), modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.WifiOff, null, tint = Color(0xFFFF8A50), modifier = Modifier.size(16.dp))
                         Text(
                             "Showing offline data — tap Refresh to retry",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFE65100)
+                            color = Color(0xFFFF8A50)
                         )
                     }
                 }
@@ -255,6 +255,7 @@ private fun ExploreHeader(
     searchQuery: String,
     onSearchChange: (String) -> Unit
 ) {
+    val bgColor = MaterialTheme.colorScheme.background
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -271,10 +272,10 @@ private fun ExploreHeader(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0.0f to Color.Black.copy(alpha = 0.5f),
-                        0.5f to Color.Black.copy(alpha = 0.2f),
-                        0.85f to Background.copy(alpha = 0.8f),
-                        1.0f to Background
+                        0.0f to Color.Black.copy(alpha = 0.55f),
+                        0.5f to Color.Black.copy(alpha = 0.25f),
+                        0.85f to bgColor.copy(alpha = 0.85f),
+                        1.0f to bgColor
                     )
                 )
         )
@@ -369,6 +370,8 @@ private fun CategoryTabsRow(
     selected: DestinationCategory,
     onSelect: (DestinationCategory) -> Unit
 ) {
+    val unselectedBg   = MaterialTheme.colorScheme.surfaceVariant
+    val unselectedText = MaterialTheme.colorScheme.onSurfaceVariant
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -376,11 +379,11 @@ private fun CategoryTabsRow(
         items(categoryTabs) { tab ->
             val isSelected = tab.category == selected
             val bgColor by animateColorAsState(
-                targetValue = if (isSelected) TripBlue else Color(0xFFF0F4FF),
+                targetValue = if (isSelected) TripBlue else unselectedBg,
                 animationSpec = tween(250), label = "tab_bg"
             )
             val textColor by animateColorAsState(
-                targetValue = if (isSelected) Color.White else Color(0xFF6B7A99),
+                targetValue = if (isSelected) Color.White else unselectedText,
                 animationSpec = tween(250), label = "tab_text"
             )
             Box(

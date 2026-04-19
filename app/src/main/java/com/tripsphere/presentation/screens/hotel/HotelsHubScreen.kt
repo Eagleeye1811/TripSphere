@@ -35,18 +35,18 @@ private data class HotelCity(
 )
 
 private val popularHotelCities = listOf(
-    HotelCity("Paris",     "France",       "🇫🇷", "City of Light",        48.8566,   2.3522,  Color(0xFF6366F1), Color(0xFF8B5CF6)),
-    HotelCity("Dubai",     "UAE",          "🇦🇪", "Luxury Redefined",     25.2048,  55.2708,  Color(0xFFF59E0B), Color(0xFFEF4444)),
-    HotelCity("Tokyo",     "Japan",        "🇯🇵", "Neon & Serenity",      35.6762, 139.6503,  Color(0xFFEC4899), Color(0xFF8B5CF6)),
-    HotelCity("New York",  "USA",          "🇺🇸", "The City Never Sleeps",40.7128, -74.0060,  Color(0xFF3B82F6), Color(0xFF06B6D4)),
-    HotelCity("London",    "UK",           "🇬🇧", "Historic Grandeur",    51.5074,  -0.1278,  Color(0xFF1E3A5F), Color(0xFF3B82F6)),
-    HotelCity("Singapore", "Singapore",    "🇸🇬", "Garden City",          1.3521,  103.8198,  Color(0xFF10B981), Color(0xFF059669)),
-    HotelCity("Rome",      "Italy",        "🇮🇹", "Eternal City",         41.9028,  12.4964,  Color(0xFFDC2626), Color(0xFFF97316)),
-    HotelCity("Bangkok",   "Thailand",     "🇹🇭", "Temple & Street Food", 13.7563, 100.5018,  Color(0xFF7C3AED), Color(0xFFDB2777)),
-    HotelCity("Barcelona", "Spain",        "🇪🇸", "Gaudí's Playground",   41.3851,   2.1734,  Color(0xFFF97316), Color(0xFFFBBF24)),
-    HotelCity("Bali",      "Indonesia",    "🇮🇩", "Island of the Gods",   -8.3405, 115.0920,  Color(0xFF059669), Color(0xFF34D399)),
-    HotelCity("Istanbul",  "Turkey",       "🇹🇷", "East Meets West",      41.0082,  28.9784,  Color(0xFFB45309), Color(0xFFF59E0B)),
-    HotelCity("Maldives",  "Maldives",     "🇲🇻", "Paradise on Earth",    1.9708,   73.5369,  Color(0xFF0EA5E9), Color(0xFF38BDF8))
+    HotelCity("Paris",     "France",       "🇫🇷", "City of Light",        48.8566,   2.3522,  Color(0xFF1A1A5E), Color(0xFF3730A3)),
+    HotelCity("Dubai",     "UAE",          "🇦🇪", "Luxury Redefined",     25.2048,  55.2708,  Color(0xFF78350F), Color(0xFFB45309)),
+    HotelCity("Tokyo",     "Japan",        "🇯🇵", "Neon & Serenity",      35.6762, 139.6503,  Color(0xFF4C1D95), Color(0xFF7C3AED)),
+    HotelCity("New York",  "USA",          "🇺🇸", "The City Never Sleeps",40.7128, -74.0060,  Color(0xFF1E3A5F), Color(0xFF1D4ED8)),
+    HotelCity("London",    "UK",           "🇬🇧", "Historic Grandeur",    51.5074,  -0.1278,  Color(0xFF0F172A), Color(0xFF1E3A5F)),
+    HotelCity("Singapore", "Singapore",    "🇸🇬", "Garden City",          1.3521,  103.8198,  Color(0xFF064E3B), Color(0xFF065F46)),
+    HotelCity("Rome",      "Italy",        "🇮🇹", "Eternal City",         41.9028,  12.4964,  Color(0xFF7F1D1D), Color(0xFF991B1B)),
+    HotelCity("Bangkok",   "Thailand",     "🇹🇭", "Temple & Street Food", 13.7563, 100.5018,  Color(0xFF2E1065), Color(0xFF4C1D95)),
+    HotelCity("Barcelona", "Spain",        "🇪🇸", "Gaudí's Playground",   41.3851,   2.1734,  Color(0xFF7C2D12), Color(0xFF9A3412)),
+    HotelCity("Bali",      "Indonesia",    "🇮🇩", "Island of the Gods",   -8.3405, 115.0920,  Color(0xFF064E3B), Color(0xFF065F46)),
+    HotelCity("Istanbul",  "Turkey",       "🇹🇷", "East Meets West",      41.0082,  28.9784,  Color(0xFF451A03), Color(0xFF78350F)),
+    HotelCity("Maldives",  "Maldives",     "🇲🇻", "Paradise on Earth",    1.9708,   73.5369,  Color(0xFF0C4A6E), Color(0xFF075985))
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,14 +66,14 @@ fun HotelsHubScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // ── Hero header ───────────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.horizontalGradient(listOf(TripBlue, Color(0xFF7C3AED))),
+                    color = TripBlueDark,
                     shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)
                 )
                 .padding(horizontal = 20.dp)
@@ -140,7 +140,7 @@ fun HotelsHubScreen(
                 if (searchQuery.isBlank()) "Popular Destinations" else "${filtered.size} result${if (filtered.size != 1) "s" else ""}",
                 style      = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color      = TextPrimary
+                color      = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -154,7 +154,7 @@ fun HotelsHubScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.SearchOff, null, tint = TextHint, modifier = Modifier.size(48.dp))
-                    Text("No cities match \"$searchQuery\"", color = TextSecondary)
+                    Text("No cities match \"$searchQuery\"", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     TextButton(onClick = { searchQuery = "" }) { Text("Clear search") }
                 }
             }

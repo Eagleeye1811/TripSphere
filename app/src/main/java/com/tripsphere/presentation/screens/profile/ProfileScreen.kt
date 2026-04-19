@@ -66,7 +66,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp)
-                    .background(Brush.verticalGradient(listOf(TripBlueDark, TripBlue, Color(0xFF42A5F5))))
+                    .background(Brush.verticalGradient(listOf(TripBlueDark, TripBlue)))
             ) {
                 // Notification bell
                 IconButton(
