@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -17,9 +18,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -100,15 +104,9 @@ fun LoginScreen(
         }
     }
 
-    val bgColor = Color(0xFF090D18)
-    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
-        // Top gradient header
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.35f)
-                .background(Brush.verticalGradient(listOf(TripBlueDark, TripBlue)))
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Full-screen trip scene background
+        TripSceneBackground()
 
         Column(
             modifier = Modifier
@@ -116,14 +114,14 @@ fun LoginScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(60.dp))
+            Spacer(Modifier.height(72.dp))
 
-            // Logo icon
+            // App logo
             Box(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White.copy(alpha = 0.2f)),
+                    .background(Color.White.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -134,7 +132,25 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "TripSphere",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            // Destination badges row
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AuthDestBadge(Icons.Default.LocationOn, "Paris")
+                AuthDestBadge(Icons.Default.BeachAccess, "Bali")
+                AuthDestBadge(Icons.Default.Landscape, "Tokyo")
+            }
+
+            Spacer(Modifier.height(20.dp))
 
             // Card
             Card(
@@ -354,6 +370,159 @@ fun LoginScreen(
             )
 
             Spacer(Modifier.height(32.dp))
+        }
+    }
+}
+
+// ── Shared auth screen background ────────────────────────────────────────────
+
+@Composable
+internal fun TripSceneBackground() {
+    Box(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+
+            // Sky — deep night fading to warm sunset horizon
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF040810), Color(0xFF08152E), Color(0xFF111F52),
+                        Color(0xFF2E1860), Color(0xFF5E2040), Color(0xFF8A3A18),
+                        Color(0xFFAA5518)
+                    ),
+                    startY = 0f, endY = h * 0.74f
+                )
+            )
+
+            // Stars
+            val stars = listOf(
+                0.07f to 0.035f, 0.17f to 0.055f, 0.27f to 0.025f,
+                0.38f to 0.048f, 0.50f to 0.018f, 0.62f to 0.040f,
+                0.73f to 0.028f, 0.84f to 0.052f, 0.93f to 0.038f,
+                0.11f to 0.110f, 0.24f to 0.095f, 0.42f to 0.125f,
+                0.56f to 0.085f, 0.69f to 0.115f, 0.88f to 0.098f,
+                0.04f to 0.185f, 0.33f to 0.165f, 0.51f to 0.200f,
+                0.76f to 0.175f, 0.96f to 0.160f,
+            )
+            stars.forEachIndexed { i, (rx, ry) ->
+                val radius = if (i % 3 == 0) 2.4f else if (i % 3 == 1) 1.6f else 1.2f
+                val alpha = if (i % 4 == 0) 0.90f else if (i % 4 == 1) 0.70f else 0.55f
+                drawCircle(Color.White.copy(alpha = alpha), radius, Offset(w * rx, h * ry))
+            }
+
+            // Crescent moon — top right
+            drawCircle(Color(0xFFFFF5D0).copy(0.88f), 26f, Offset(w * 0.82f, h * 0.072f))
+            drawCircle(Color(0xFF08152E), 22f, Offset(w * 0.845f, h * 0.065f))
+
+            // Horizon sun glow
+            drawCircle(
+                brush = Brush.radialGradient(
+                    listOf(
+                        Color(0xFFFF8C42).copy(0.55f),
+                        Color(0xFFFF5C1A).copy(0.22f),
+                        Color.Transparent
+                    ),
+                    center = Offset(w * 0.5f, h * 0.74f),
+                    radius = h * 0.28f
+                ),
+                radius = h * 0.28f,
+                center = Offset(w * 0.5f, h * 0.74f)
+            )
+
+            // Mountain layer 1 — far, blue-indigo tint
+            drawPath(Path().apply {
+                moveTo(0f, h * 0.57f)
+                lineTo(w * 0.10f, h * 0.40f)
+                lineTo(w * 0.21f, h * 0.48f)
+                lineTo(w * 0.33f, h * 0.33f)
+                lineTo(w * 0.45f, h * 0.45f)
+                lineTo(w * 0.57f, h * 0.37f)
+                lineTo(w * 0.68f, h * 0.47f)
+                lineTo(w * 0.80f, h * 0.38f)
+                lineTo(w * 0.92f, h * 0.45f)
+                lineTo(w, h * 0.41f)
+                lineTo(w, h * 0.59f); lineTo(0f, h * 0.59f); close()
+            }, Color(0xFF1C2B6A).copy(0.78f))
+
+            // Mountain layer 2 — mid
+            drawPath(Path().apply {
+                moveTo(0f, h * 0.63f)
+                lineTo(w * 0.07f, h * 0.50f)
+                lineTo(w * 0.17f, h * 0.57f)
+                lineTo(w * 0.29f, h * 0.45f)
+                lineTo(w * 0.41f, h * 0.54f)
+                lineTo(w * 0.53f, h * 0.47f)
+                lineTo(w * 0.65f, h * 0.56f)
+                lineTo(w * 0.77f, h * 0.48f)
+                lineTo(w * 0.89f, h * 0.55f)
+                lineTo(w, h * 0.51f)
+                lineTo(w, h * 0.66f); lineTo(0f, h * 0.66f); close()
+            }, Color(0xFF0C1834).copy(0.92f))
+
+            // Mountain layer 3 — nearest, darkest
+            drawPath(Path().apply {
+                moveTo(0f, h * 0.70f)
+                lineTo(w * 0.11f, h * 0.58f)
+                lineTo(w * 0.22f, h * 0.64f)
+                lineTo(w * 0.34f, h * 0.56f)
+                lineTo(w * 0.46f, h * 0.63f)
+                lineTo(w * 0.58f, h * 0.57f)
+                lineTo(w * 0.70f, h * 0.64f)
+                lineTo(w * 0.82f, h * 0.58f)
+                lineTo(w * 0.94f, h * 0.63f)
+                lineTo(w, h * 0.60f)
+                lineTo(w, h * 0.72f); lineTo(0f, h * 0.72f); close()
+            }, Color(0xFF060B18))
+
+            // Solid dark ground
+            drawRect(
+                Color(0xFF050912),
+                topLeft = Offset(0f, h * 0.71f),
+                size = Size(w, h - h * 0.71f)
+            )
+
+            // Airplane trail — dashed line upper sky
+            drawPath(Path().apply {
+                moveTo(w * 0.06f, h * 0.225f)
+                lineTo(w * 0.52f, h * 0.085f)
+            }, Color.White.copy(0.20f), style = Stroke(
+                width = 1.8f,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))
+            ))
+            drawCircle(Color.White.copy(0.65f), 3.5f, Offset(w * 0.52f, h * 0.085f))
+
+            // Dark scrim — transparent → opaque so card area is readable
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color.Transparent,
+                        Color(0xFF050912).copy(0.50f),
+                        Color(0xFF050912).copy(0.88f),
+                        Color(0xFF050912)
+                    ),
+                    startY = h * 0.20f, endY = h
+                )
+            )
+        }
+
+    }
+}
+
+@Composable
+internal fun AuthDestBadge(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White.copy(alpha = 0.12f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(icon, null, Modifier.size(12.dp), tint = Color(0xFF4FC3F7))
+            Text(label, fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
         }
     }
 }

@@ -14,7 +14,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -50,14 +49,9 @@ fun SignUpScreen(
         }
     }
 
-    val bgColor = Color(0xFF090D18)
-    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.32f)
-                .background(Brush.verticalGradient(listOf(TripBlueDark, TripBlue)))
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Full-screen trip scene background
+        TripSceneBackground()
 
         Column(
             modifier = Modifier
@@ -65,13 +59,13 @@ fun SignUpScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(72.dp))
 
             Box(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White.copy(alpha = 0.2f)),
+                    .background(Color.White.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -82,7 +76,25 @@ fun SignUpScreen(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "TripSphere",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            // Destination badges row
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AuthDestBadge(Icons.Default.Terrain, "Alps")
+                AuthDestBadge(Icons.Default.Flight, "Safari")
+                AuthDestBadge(Icons.Default.Apartment, "NYC")
+            }
+
+            Spacer(Modifier.height(20.dp))
 
             Card(
                 modifier = Modifier
