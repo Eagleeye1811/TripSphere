@@ -57,12 +57,12 @@ fun HotelsScreen(
     Scaffold(
         topBar = {
             Column {
-                // ── Gradient hero header ──────────────────────────────────────
+                // ── Solid header ──────────────────────────────────────────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            Brush.horizontalGradient(listOf(TripBlue, Color(0xFF7C3AED))),
+                            TripBlue,
                             shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                         )
                         .padding(horizontal = 20.dp)

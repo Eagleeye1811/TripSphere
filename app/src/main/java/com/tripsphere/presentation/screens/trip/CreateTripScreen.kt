@@ -137,9 +137,11 @@ fun CreateTripScreen(
                 )
             )
 
-            // Date pickers row
+            // Date pickers row — IntrinsicSize.Max keeps both fields identical height
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Start date
@@ -148,11 +150,13 @@ fun CreateTripScreen(
                     onValueChange = { },
                     label = { Text("Start Date") },
                     readOnly = true,
+                    singleLine = true,
                     leadingIcon = {
                         Icon(Icons.Default.CalendarToday, null, tint = TripBlue)
                     },
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxHeight()
                         .clickable { showStartDatePicker = true },
                     shape = RoundedCornerShape(14.dp),
                     enabled = false,
@@ -170,11 +174,13 @@ fun CreateTripScreen(
                     onValueChange = { },
                     label = { Text("End Date") },
                     readOnly = true,
+                    singleLine = true,
                     leadingIcon = {
                         Icon(Icons.Default.CalendarMonth, null, tint = TripBlue)
                     },
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxHeight()
                         .clickable { showEndDatePicker = true },
                     shape = RoundedCornerShape(14.dp),
                     enabled = false,

@@ -12,7 +12,10 @@ data class Destination(
     val rating: Float,
     val topAttractions: List<String>,
     val latitude: Double = 0.0,
-    val longitude: Double = 0.0
+    val longitude: Double = 0.0,
+    val highlights: String = "",
+    val priceLevel: String = "Mid-Range",
+    val reviewCount: Int = 0
 )
 
 enum class DestinationCategory {

@@ -5,15 +5,15 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,8 +28,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,22 +43,38 @@ import com.tripsphere.presentation.viewmodel.ExploreViewModel
 import com.tripsphere.utils.ShakeDetector
 import kotlinx.coroutines.delay
 
-// ─── Category model ───────────────────────────────────────────────────────────
+// ─── Models ───────────────────────────────────────────────────────────────────
 
 private data class CategoryTab(
     val category: DestinationCategory,
-    val label: String
+    val label: String,
+    val emoji: String,
+    val accentColor: Color
 )
 
 private val categoryTabs = listOf(
-    CategoryTab(DestinationCategory.ALL,       "🌍 All"),
-    CategoryTab(DestinationCategory.BEACH,     "🏖️ Beach"),
-    CategoryTab(DestinationCategory.MOUNTAIN,  "⛰️ Mountain"),
-    CategoryTab(DestinationCategory.CITY,      "🏙️ City"),
-    CategoryTab(DestinationCategory.ADVENTURE, "🧗 Adventure")
+    CategoryTab(DestinationCategory.ALL,       "All",       "🌍", TripBlue),
+    CategoryTab(DestinationCategory.BEACH,     "Beaches",   "🏖️", Color(0xFF00BCD4)),
+    CategoryTab(DestinationCategory.MOUNTAIN,  "Mountains", "⛰️", Color(0xFF4CAF50)),
+    CategoryTab(DestinationCategory.CITY,      "Cities",    "🏙️", Color(0xFF9C27B0)),
+    CategoryTab(DestinationCategory.ADVENTURE, "Adventure", "🧗", Color(0xFFFF7043))
 )
 
-// ─── Main Screen ─────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+private fun formatReviews(count: Int): String = when {
+    count >= 10_000 -> "${"%.0f".format(count / 1_000f)}k"
+    count >= 1_000  -> "${"%.1f".format(count / 1_000f)}k"
+    else            -> count.toString()
+}
+
+private fun priceLevelColor(level: String): Color = when (level) {
+    "Luxury"   -> Color(0xFFFF8F00)
+    "Budget"   -> Color(0xFF388E3C)
+    else       -> Color(0xFF1565C0)
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 @Composable
 fun ExploreScreen(
@@ -64,12 +82,11 @@ fun ExploreScreen(
     onNavigateBack: () -> Unit,
     viewModel: ExploreViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState       by viewModel.uiState.collectAsState()
+    val context        = LocalContext.current
+    var showShakeHint  by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
-    var showShakeHint by remember { mutableStateOf(false) }
-
-    // Shake to shuffle destinations
+    // Shake to shuffle
     val shakeDetector = remember { ShakeDetector(context) }
     DisposableEffect(Unit) {
         shakeDetector.register()
@@ -84,163 +101,281 @@ fun ExploreScreen(
         }
     }
 
+    val allDests  = uiState.filteredDestinations
+
+    // ── ALL mode rows (computed once per list change) ──────────────────────────
+    val featuredDests     = remember(allDests) { allDests.sortedByDescending { it.rating }.take(6) }
+    val trendingDests     = remember(allDests) { allDests.sortedByDescending { it.reviewCount }.take(8) }
+    val beachDests        = remember(allDests) { allDests.filter { it.category == DestinationCategory.BEACH } }
+    val mountainDests     = remember(allDests) { allDests.filter { it.category == DestinationCategory.MOUNTAIN } }
+    val cityDests         = remember(allDests) { allDests.filter { it.category == DestinationCategory.CITY } }
+    val adventureDests    = remember(allDests) { allDests.filter { it.category == DestinationCategory.ADVENTURE } }
+    val luxuryDests       = remember(allDests) { allDests.filter { it.priceLevel == "Luxury" }.sortedByDescending { it.rating } }
+    val budgetDests       = remember(allDests) { allDests.filter { it.priceLevel == "Budget" }.sortedByDescending { it.rating } }
+    val hiddenGemsDests   = remember(allDests) { allDests.filter { it.reviewCount < 22_000 }.sortedByDescending { it.rating }.take(8) }
+
+    // ── Single-category rows ───────────────────────────────────────────────────
+    val topRatedDests     = remember(allDests) { allDests.sortedByDescending { it.rating } }
+    val luxuryCatDests    = remember(allDests) { allDests.filter { it.priceLevel == "Luxury" } }
+    val budgetCatDests    = remember(allDests) { allDests.filter { it.priceLevel == "Budget" } }
+    val midRangeCatDests  = remember(allDests) { allDests.filter { it.priceLevel == "Mid-Range" }.sortedByDescending { it.rating } }
+    val othersDests       = remember(uiState.allDestinations, uiState.selectedCategory) {
+        uiState.allDestinations
+            .filter { it.category != uiState.selectedCategory }
+            .sortedByDescending { it.rating }
+            .take(10)
+    }
+
+    val navBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(bottom = 100.dp + navBarBottomPadding)
         ) {
-            // ── Immersive Header ─────────────────────────────────────────
-            ExploreHeader(
-                searchQuery = uiState.searchQuery,
-                onSearchChange = viewModel::onSearchQueryChange
-            )
-
-            // ── Category Tabs ────────────────────────────────────────────
-            Spacer(Modifier.height(4.dp))
-            CategoryTabsRow(
-                selected = uiState.selectedCategory,
-                onSelect = { viewModel.onCategorySelected(it) }
-            )
-
-            // ── Results count ────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = TripBlue
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Fetching live places…",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
-                } else {
-                    Text(
-                        text = "${uiState.filteredDestinations.size} tourist places",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = TripBlue.copy(alpha = 0.10f),
-                    modifier = Modifier.clickable { viewModel.refresh() }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Refresh, null, tint = TripBlue, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            "Refresh",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TripBlue,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
+            // ── Header ───────────────────────────────────────────────────────
+            item {
+                ExploreHeader(
+                    searchQuery       = uiState.searchQuery,
+                    onSearchChange    = viewModel::onSearchQueryChange,
+                    totalDestinations = uiState.filteredDestinations.size
+                )
             }
 
-            // ── Offline / error banner ───────────────────────────────────
-            uiState.error?.let {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFF3D2010)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(Icons.Default.WifiOff, null, tint = Color(0xFFFF8A50), modifier = Modifier.size(16.dp))
-                        Text(
-                            "Showing offline data — tap Refresh to retry",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFF8A50)
-                        )
-                    }
-                }
+            // ── Category filter tabs ──────────────────────────────────────────
+            item {
+                CategoryFilterRow(
+                    selectedCategory = uiState.selectedCategory,
+                    onCategorySelect = { viewModel.onCategorySelected(it) }
+                )
             }
 
-            // ── Staggered Destinations Grid ──────────────────────────────
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalItemSpacing = 12.dp,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                item(span = StaggeredGridItemSpan.FullLine) { Spacer(Modifier.height(0.dp)) }
+            // ── Empty state ───────────────────────────────────────────────────
+            if (allDests.isEmpty()) {
+                item { EmptySearchState(query = uiState.searchQuery) }
+                return@LazyColumn
+            }
 
-                if (uiState.isLoading && uiState.filteredDestinations.isEmpty()) {
-                    item(span = StaggeredGridItemSpan.FullLine) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(color = TripBlue)
-                                Spacer(Modifier.height(16.dp))
-                                Text("Loading tourist places…", color = TextSecondary)
-                            }
-                        }
-                    }
-                } else {
-                    val destinations = uiState.filteredDestinations
-                    items(destinations, key = { it.id }) { destination ->
-                        val isLarge = destinations.indexOf(destination) % 3 == 0
-                        ExploreDestinationCard(
-                            destination = destination,
-                            isLarge = isLarge,
-                            onClick = { onDestinationClick(destination.id) }
+            // ── ALL mode: multiple themed rows ────────────────────────────────
+            if (uiState.selectedCategory == DestinationCategory.ALL) {
+
+                if (featuredDests.isNotEmpty()) {
+                    item(key = "featured") {
+                        SectionRow(
+                            title        = "✨ Featured",
+                            subtitle     = "The world's most breathtaking destinations",
+                            accentColor  = TripBlue,
+                            destinations = featuredDests,
+                            onItemClick  = onDestinationClick,
+                            cardWidth    = 200.dp,
+                            cardHeight   = 275.dp
                         )
                     }
                 }
 
-                item(span = StaggeredGridItemSpan.FullLine) { Spacer(Modifier.height(20.dp)) }
+                if (trendingDests.isNotEmpty()) {
+                    item(key = "trending") {
+                        SectionRow(
+                            title        = "🔥 Trending Now",
+                            subtitle     = "Most visited destinations globally",
+                            accentColor  = Color(0xFFFF5722),
+                            destinations = trendingDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
+
+                if (beachDests.isNotEmpty()) {
+                    item(key = "beaches") {
+                        SectionRow(
+                            title        = "🏖️ Beach Escapes",
+                            subtitle     = "Sun, sea & sand at their finest",
+                            accentColor  = Color(0xFF00BCD4),
+                            destinations = beachDests,
+                            onItemClick  = onDestinationClick,
+                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.BEACH) }
+                        )
+                    }
+                }
+
+                if (mountainDests.isNotEmpty()) {
+                    item(key = "mountains") {
+                        SectionRow(
+                            title        = "⛰️ Mountain Retreats",
+                            subtitle     = "Peaks, glaciers & high-altitude wonder",
+                            accentColor  = Color(0xFF4CAF50),
+                            destinations = mountainDests,
+                            onItemClick  = onDestinationClick,
+                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.MOUNTAIN) }
+                        )
+                    }
+                }
+
+                if (cityDests.isNotEmpty()) {
+                    item(key = "cities") {
+                        SectionRow(
+                            title        = "🏙️ City Breaks",
+                            subtitle     = "Culture, cuisine & iconic skylines",
+                            accentColor  = Color(0xFF9C27B0),
+                            destinations = cityDests,
+                            onItemClick  = onDestinationClick,
+                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.CITY) }
+                        )
+                    }
+                }
+
+                if (adventureDests.isNotEmpty()) {
+                    item(key = "adventure") {
+                        SectionRow(
+                            title        = "🧗 Adventure Awaits",
+                            subtitle     = "Expeditions that push every boundary",
+                            accentColor  = Color(0xFFFF7043),
+                            destinations = adventureDests,
+                            onItemClick  = onDestinationClick,
+                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.ADVENTURE) }
+                        )
+                    }
+                }
+
+                if (luxuryDests.isNotEmpty()) {
+                    item(key = "luxury") {
+                        SectionRow(
+                            title        = "💎 Luxury Escapes",
+                            subtitle     = "Premium experiences without compromise",
+                            accentColor  = Color(0xFFFF8F00),
+                            destinations = luxuryDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
+
+                if (budgetDests.isNotEmpty()) {
+                    item(key = "budget") {
+                        SectionRow(
+                            title        = "💰 Budget Discoveries",
+                            subtitle     = "Incredible destinations, wallet-friendly prices",
+                            accentColor  = Color(0xFF388E3C),
+                            destinations = budgetDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
+
+                if (hiddenGemsDests.isNotEmpty()) {
+                    item(key = "hidden") {
+                        SectionRow(
+                            title        = "🔮 Hidden Gems",
+                            subtitle     = "Off-the-beaten-path wonders worth seeking",
+                            accentColor  = Color(0xFF7C4DFF),
+                            destinations = hiddenGemsDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
+
+            } else {
+                // ── Single-category mode: curated rows ────────────────────────
+                val tab = categoryTabs.find { it.category == uiState.selectedCategory }
+                val tabColor = tab?.accentColor ?: TripBlue
+
+                // Top rated (all in this category) — wider cards
+                if (topRatedDests.isNotEmpty()) {
+                    item(key = "cat_toprated") {
+                        SectionRow(
+                            title        = "⭐ Top Rated ${tab?.label ?: ""}",
+                            subtitle     = "Highest-rated by verified travellers",
+                            accentColor  = tabColor,
+                            destinations = topRatedDests,
+                            onItemClick  = onDestinationClick,
+                            cardWidth    = 200.dp,
+                            cardHeight   = 275.dp
+                        )
+                    }
+                }
+
+                // Luxury within this category
+                if (luxuryCatDests.size >= 2) {
+                    item(key = "cat_luxury") {
+                        SectionRow(
+                            title        = "💎 Premium ${tab?.label ?: ""}",
+                            subtitle     = "Elevated experiences, exceptional quality",
+                            accentColor  = Color(0xFFFF8F00),
+                            destinations = luxuryCatDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
+
+                // Mid-range within this category
+                if (midRangeCatDests.size >= 2) {
+                    item(key = "cat_midrange") {
+                        SectionRow(
+                            title        = "🌟 Best Value ${tab?.label ?: ""}",
+                            subtitle     = "Outstanding quality at a fair price",
+                            accentColor  = Color(0xFF1565C0),
+                            destinations = midRangeCatDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
+
+                // Budget within this category
+                if (budgetCatDests.size >= 2) {
+                    item(key = "cat_budget") {
+                        SectionRow(
+                            title        = "💰 Budget-Friendly ${tab?.label ?: ""}",
+                            subtitle     = "Great adventures without breaking the bank",
+                            accentColor  = Color(0xFF388E3C),
+                            destinations = budgetCatDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
+
+                // You may also like (other categories)
+                if (othersDests.isNotEmpty()) {
+                    item(key = "cat_others") {
+                        SectionRow(
+                            title        = "🌍 You May Also Like",
+                            subtitle     = "Explore beyond your current category",
+                            accentColor  = TripBlue,
+                            destinations = othersDests,
+                            onItemClick  = onDestinationClick
+                        )
+                    }
+                }
             }
         }
 
-        // ── Shake hint toast ─────────────────────────────────────────────
+        // ── Shake hint toast ─────────────────────────────────────────────────
         AnimatedVisibility(
-            visible = showShakeHint,
-            enter = fadeIn(),
-            exit = fadeOut(),
+            visible  = showShakeHint,
+            enter    = fadeIn() + scaleIn(),
+            exit     = fadeOut() + scaleOut(),
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 72.dp)
+                .padding(top = 80.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color.Black.copy(alpha = 0.75f)
+                shape           = RoundedCornerShape(24.dp),
+                color           = MaterialTheme.colorScheme.inverseSurface,
+                shadowElevation = 8.dp
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    modifier              = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                    verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.Shuffle, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Shuffle, null,
+                        tint     = MaterialTheme.colorScheme.inverseOnSurface,
+                        modifier = Modifier.size(16.dp))
                     Text(
                         "Destinations shuffled!",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
+                        color      = MaterialTheme.colorScheme.inverseOnSurface,
+                        style      = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -248,103 +383,418 @@ fun ExploreScreen(
     }
 }
 
-// ─── Immersive Header with Search ─────────────────────────────────────────────
+// ─── Section Row (horizontal OTT-style scroll row) ────────────────────────────
+
+@Composable
+private fun SectionRow(
+    title: String,
+    subtitle: String = "",
+    accentColor: Color,
+    destinations: List<Destination>,
+    onItemClick: (Int) -> Unit,
+    onSeeAll: (() -> Unit)? = null,
+    cardWidth: Dp  = 175.dp,
+    cardHeight: Dp = 248.dp
+) {
+    Column(modifier = Modifier.padding(top = 22.dp)) {
+        // Section header
+        Row(
+            modifier              = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 2.dp),
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier              = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(22.dp)
+                        .clip(CircleShape)
+                        .background(accentColor)
+                )
+                Column {
+                    Text(
+                        text       = title,
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color      = MaterialTheme.colorScheme.onBackground
+                    )
+                    if (subtitle.isNotEmpty()) {
+                        Text(
+                            text      = subtitle,
+                            style     = MaterialTheme.typography.labelSmall,
+                            color     = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines  = 1,
+                            overflow  = TextOverflow.Ellipsis,
+                            fontSize  = 11.sp
+                        )
+                    }
+                }
+            }
+            if (onSeeAll != null) {
+                Row(
+                    modifier          = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication        = null,
+                            onClick           = onSeeAll
+                        )
+                        .padding(start = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "See All",
+                        style      = MaterialTheme.typography.labelMedium,
+                        color      = accentColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(Icons.Default.ChevronRight, null,
+                        tint     = accentColor,
+                        modifier = Modifier.size(16.dp))
+                }
+            } else {
+                Text(
+                    "${destinations.size} places",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        LazyRow(
+            contentPadding        = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(destinations, key = { it.id }) { dest ->
+                DestinationCard(
+                    destination = dest,
+                    width       = cardWidth,
+                    height      = cardHeight,
+                    onClick     = { onItemClick(dest.id) }
+                )
+            }
+        }
+    }
+}
+
+// ─── Rich destination card ────────────────────────────────────────────────────
+
+@Composable
+private fun DestinationCard(
+    destination: Destination,
+    width: Dp,
+    height: Dp,
+    onClick: () -> Unit
+) {
+    var isLiked by remember { mutableStateOf(false) }
+
+    val categoryColor = when (destination.category) {
+        DestinationCategory.BEACH     -> Color(0xFF00BCD4)
+        DestinationCategory.MOUNTAIN  -> Color(0xFF4CAF50)
+        DestinationCategory.CITY      -> Color(0xFF9C27B0)
+        DestinationCategory.ADVENTURE -> Color(0xFFFF7043)
+        else                          -> TripBlue
+    }
+
+    Box(
+        modifier = Modifier
+            .width(width)
+            .height(height)
+            .shadow(8.dp, RoundedCornerShape(20.dp), clip = false)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+    ) {
+        // Photo
+        AsyncImage(
+            model              = destination.imageUrl,
+            contentDescription = destination.name,
+            modifier           = Modifier.fillMaxSize(),
+            contentScale       = ContentScale.Crop
+        )
+
+        // Gradient scrim — heavy at the bottom for legibility
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.00f to Color.Black.copy(alpha = 0.08f),
+                        0.35f to Color.Transparent,
+                        0.60f to Color.Black.copy(alpha = 0.20f),
+                        1.00f to Color.Black.copy(alpha = 0.92f)
+                    )
+                )
+        )
+
+        // Category chip — top left
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(10.dp),
+            shape = RoundedCornerShape(8.dp),
+            color = categoryColor.copy(alpha = 0.92f)
+        ) {
+            Text(
+                text       = destination.category.name.lowercase().replaceFirstChar { it.uppercase() },
+                modifier   = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                style      = MaterialTheme.typography.labelSmall,
+                color      = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize   = 10.sp
+            )
+        }
+
+        // Like button — top right
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(10.dp)
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(
+                    if (isLiked) Color(0xFFEF5350).copy(alpha = 0.90f)
+                    else Color.Black.copy(alpha = 0.38f)
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication        = null
+                ) { isLiked = !isLiked },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector        = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = null,
+                tint               = Color.White,
+                modifier           = Modifier.size(17.dp)
+            )
+        }
+
+        // Bottom info block
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .padding(horizontal = 11.dp, vertical = 11.dp)
+        ) {
+            // Name
+            Text(
+                text       = destination.name,
+                style      = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color      = Color.White,
+                maxLines   = 1,
+                overflow   = TextOverflow.Ellipsis
+            )
+
+            // Highlights tagline
+            if (destination.highlights.isNotEmpty()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text       = destination.highlights,
+                    style      = MaterialTheme.typography.labelSmall,
+                    color      = Color.White.copy(alpha = 0.72f),
+                    maxLines   = 1,
+                    overflow   = TextOverflow.Ellipsis,
+                    fontStyle  = FontStyle.Italic,
+                    fontSize   = 9.5.sp
+                )
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            // Country + Rating row
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.LocationOn, null,
+                        tint     = Color.White.copy(alpha = 0.78f),
+                        modifier = Modifier.size(10.dp)
+                    )
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        text     = destination.country,
+                        style    = MaterialTheme.typography.labelSmall,
+                        color    = Color.White.copy(alpha = 0.78f),
+                        maxLines = 1,
+                        fontSize = 10.sp
+                    )
+                }
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Icon(Icons.Default.Star, null,
+                        tint     = Color(0xFFFFD600),
+                        modifier = Modifier.size(10.dp))
+                    Text(
+                        text       = destination.rating.toString(),
+                        style      = MaterialTheme.typography.labelSmall,
+                        color      = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 10.sp
+                    )
+                    if (destination.reviewCount > 0) {
+                        Text(
+                            text     = " (${formatReviews(destination.reviewCount)})",
+                            style    = MaterialTheme.typography.labelSmall,
+                            color    = Color.White.copy(alpha = 0.60f),
+                            fontSize = 9.sp
+                        )
+                    }
+                }
+            }
+
+            // Price level pill
+            if (destination.priceLevel.isNotEmpty()) {
+                Spacer(Modifier.height(5.dp))
+                val plColor = priceLevelColor(destination.priceLevel)
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = plColor.copy(alpha = 0.88f)
+                ) {
+                    Text(
+                        text       = destination.priceLevel,
+                        modifier   = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                        style      = MaterialTheme.typography.labelSmall,
+                        color      = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 9.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─── Immersive Header ─────────────────────────────────────────────────────────
 
 @Composable
 private fun ExploreHeader(
     searchQuery: String,
-    onSearchChange: (String) -> Unit
+    onSearchChange: (String) -> Unit,
+    totalDestinations: Int
 ) {
     val bgColor = MaterialTheme.colorScheme.background
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(290.dp)
     ) {
         AsyncImage(
-            model = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800",
+            model              = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=900",
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            modifier           = Modifier.fillMaxSize(),
+            contentScale       = ContentScale.Crop
         )
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0.0f to Color.Black.copy(alpha = 0.55f),
-                        0.5f to Color.Black.copy(alpha = 0.25f),
-                        0.85f to bgColor.copy(alpha = 0.85f),
-                        1.0f to bgColor
+                        0.00f to Color.Black.copy(alpha = 0.55f),
+                        0.40f to Color.Black.copy(alpha = 0.15f),
+                        0.75f to bgColor.copy(alpha = 0.75f),
+                        1.00f to bgColor
                     )
                 )
         )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 56.dp, start = 20.dp, end = 20.dp, bottom = 24.dp),
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(top = 14.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier              = Modifier.fillMaxWidth(),
+                verticalAlignment     = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
                     Text(
-                        text = "Discover",
-                        style = MaterialTheme.typography.displayMedium,
+                        "Discover",
+                        style      = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
-                        lineHeight = 40.sp
+                        color      = Color.White,
+                        lineHeight = 36.sp
                     )
                     Text(
-                        text = "Your next destination awaits",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        "Your next destination awaits ✈️",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.88f)
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.25f))
-                        .clickable { },
-                    contentAlignment = Alignment.Center
+                Surface(
+                    shape  = RoundedCornerShape(20.dp),
+                    color  = Color.White.copy(alpha = 0.18f),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, Color.White.copy(alpha = 0.35f)
+                    )
                 ) {
-                    Icon(Icons.Default.Map, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                    Column(
+                        modifier            = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "$totalDestinations+",
+                            style      = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color      = Color.White
+                        )
+                        Text(
+                            "Places",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.80f)
+                        )
+                    }
                 }
             }
 
+            // Search bar
             Surface(
-                modifier = Modifier
+                modifier       = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, RoundedCornerShape(20.dp)),
-                shape = RoundedCornerShape(20.dp),
-                color = Color.White.copy(alpha = 0.25f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))
+                    .shadow(12.dp, RoundedCornerShape(18.dp)),
+                shape          = RoundedCornerShape(18.dp),
+                color          = MaterialTheme.colorScheme.surface,
+                tonalElevation = 4.dp
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    modifier          = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Search, null, tint = TripBlue, modifier = Modifier.size(22.dp))
                     Spacer(Modifier.width(12.dp))
                     androidx.compose.foundation.text.BasicTextField(
-                        value = searchQuery,
+                        value         = searchQuery,
                         onValueChange = onSearchChange,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
-                        cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
+                        modifier      = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        singleLine    = true,
+                        textStyle     = MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        cursorBrush   = androidx.compose.ui.graphics.SolidColor(TripBlue),
                         decorationBox = { innerTextField ->
                             Box(contentAlignment = Alignment.CenterStart) {
                                 if (searchQuery.isEmpty()) {
                                     Text(
-                                        "Search destinations...",
-                                        color = Color.White.copy(alpha = 0.8f),
+                                        "Search destinations, countries…",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         style = MaterialTheme.typography.bodyLarge
                                     )
                                 }
@@ -353,9 +803,18 @@ private fun ExploreHeader(
                         }
                     )
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { onSearchChange("") }, modifier = Modifier.size(24.dp)) {
-                            Icon(Icons.Default.Close, null, tint = Color.White.copy(alpha = 0.8f))
+                        IconButton(
+                            onClick  = { onSearchChange("") },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(Icons.Default.Close, null,
+                                tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp))
                         }
+                    } else {
+                        Icon(Icons.Default.Mic, null,
+                            tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -363,163 +822,108 @@ private fun ExploreHeader(
     }
 }
 
-// ─── Category Tabs ────────────────────────────────────────────────────────────
+// ─── Category filter row (tabs with underline indicator only) ─────────────────
 
 @Composable
-private fun CategoryTabsRow(
-    selected: DestinationCategory,
-    onSelect: (DestinationCategory) -> Unit
+private fun CategoryFilterRow(
+    selectedCategory: DestinationCategory,
+    onCategorySelect: (DestinationCategory) -> Unit
 ) {
-    val unselectedBg   = MaterialTheme.colorScheme.surfaceVariant
-    val unselectedText = MaterialTheme.colorScheme.onSurfaceVariant
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        items(categoryTabs) { tab ->
-            val isSelected = tab.category == selected
-            val bgColor by animateColorAsState(
-                targetValue = if (isSelected) TripBlue else unselectedBg,
-                animationSpec = tween(250), label = "tab_bg"
-            )
-            val textColor by animateColorAsState(
-                targetValue = if (isSelected) Color.White else unselectedText,
-                animationSpec = tween(250), label = "tab_text"
-            )
-            Box(
-                modifier = Modifier
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(bgColor)
-                    .clickable { onSelect(tab.category) }
-                    .padding(horizontal = 18.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = tab.label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = textColor,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        LazyRow(
+            contentPadding        = PaddingValues(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            items(categoryTabs) { tab ->
+                val isSelected = tab.category == selectedCategory
+                val textColor by animateColorAsState(
+                    targetValue   = if (isSelected) tab.accentColor
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    animationSpec = tween(200),
+                    label         = "cat_text"
                 )
+                Column(
+                    modifier            = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication        = null
+                        ) { onCategorySelect(tab.category) }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Text(tab.emoji, fontSize = 13.sp)
+                        Text(
+                            tab.label.uppercase(),
+                            style         = MaterialTheme.typography.labelMedium,
+                            fontWeight    = if (isSelected) FontWeight.ExtraBold else FontWeight.Normal,
+                            color         = textColor,
+                            letterSpacing = 0.8.sp
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    AnimatedVisibility(
+                        visible = isSelected,
+                        enter   = fadeIn(tween(180)),
+                        exit    = fadeOut(tween(180))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(32.dp)
+                                .height(3.dp)
+                                .clip(CircleShape)
+                                .background(tab.accentColor)
+                        )
+                    }
+                    if (!isSelected) Spacer(Modifier.height(3.dp))
+                }
             }
         }
+
+        HorizontalDivider(
+            color     = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+            thickness = 0.8.dp
+        )
     }
 }
 
-// ─── Destination Card ─────────────────────────────────────────────────────────
+// ─── Empty state ──────────────────────────────────────────────────────────────
 
 @Composable
-private fun ExploreDestinationCard(
-    destination: Destination,
-    isLarge: Boolean,
-    onClick: () -> Unit
-) {
-    val imageHeight = if (isLarge) 220.dp else 160.dp
-    var isLiked by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier
+private fun EmptySearchState(query: String) {
+    Column(
+        modifier              = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+            .padding(vertical = 56.dp),
+        horizontalAlignment   = Alignment.CenterHorizontally,
+        verticalArrangement   = Arrangement.spacedBy(14.dp)
     ) {
-        Box {
-            AsyncImage(
-                model = destination.imageUrl,
-                contentDescription = destination.name,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(imageHeight),
-                contentScale = ContentScale.Crop
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(imageHeight)
-                    .background(
-                        Brush.verticalGradient(
-                            0.25f to Color.Transparent,
-                            1.0f to Color.Black.copy(alpha = 0.80f)
-                        )
-                    )
-            )
-            // Rating badge
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(10.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = Color(0xFFFFD600)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Star, null, tint = Color(0xFF5D4037), modifier = Modifier.size(12.dp))
-                    Spacer(Modifier.width(3.dp))
-                    Text(
-                        destination.rating.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF5D4037),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-            // Like button
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(10.dp)
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.38f))
-                    .clickable { isLiked = !isLiked },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = null,
-                    tint = if (isLiked) Color(0xFFEF5350) else Color.White,
-                    modifier = Modifier.size(17.dp)
-                )
-            }
-            // Info
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(12.dp)
-            ) {
-                Text(
-                    destination.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.LocationOn, null, tint = Color.White.copy(alpha = 0.80f), modifier = Modifier.size(12.dp))
-                    Spacer(Modifier.width(3.dp))
-                    Text(
-                        destination.country,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.80f)
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Surface(shape = RoundedCornerShape(8.dp), color = Color.White.copy(alpha = 0.18f)) {
-                    Text(
-                        destination.description,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(0.88f),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
+        Box(
+            modifier         = Modifier
+                .size(84.dp)
+                .clip(CircleShape)
+                .background(TripBlue.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.SearchOff, null, tint = TripBlue, modifier = Modifier.size(42.dp))
         }
+        Text(
+            text       = if (query.isNotEmpty()) "No results for \"$query\"" else "Nothing here yet",
+            style      = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color      = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text  = "Try a different search term or browse a category",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

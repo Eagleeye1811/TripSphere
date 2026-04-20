@@ -58,11 +58,13 @@ fun PlannerScreen(
 
     val recentTrips = (uiState.upcomingTrips + uiState.ongoingTrips).take(3)
 
+    val navBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(bottom = 100.dp)
+        contentPadding = PaddingValues(bottom = 100.dp + navBarBottomPadding)
     ) {
         // ── Hero Header ──────────────────────────────────────────────────────
         item {

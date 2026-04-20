@@ -45,10 +45,11 @@ fun TripSphereBottomBar(
     currentRoute: String?,
     onNavigate: (Screen) -> Unit
 ) {
-    // Floating Premium Bottom Bar
+    // Floating Premium Bottom Bar — sits above the system navigation bar
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 20.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
@@ -56,14 +57,21 @@ fun TripSphereBottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
-                    elevation = 20.dp, 
-                    shape = RoundedCornerShape(32.dp), 
+                    elevation = 20.dp,
+                    shape = RoundedCornerShape(32.dp),
                     spotColor = TripBlue.copy(alpha = 0.15f),
-                    ambientColor = TripBlue.copy(alpha = 0.05f) 
+                    ambientColor = TripBlue.copy(alpha = 0.05f)
                 )
                 .background(
                     color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(32.dp)
+                )
+                // Catch-all: absorb touches that land in gap/padding areas between
+                // pill items so they don't fall through to the screen content below.
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {}
                 )
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceAround,

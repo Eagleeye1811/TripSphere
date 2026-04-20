@@ -127,11 +127,13 @@ fun HomeScreen(
         return
     }
 
+    val navBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(bottom = 32.dp)
+        contentPadding = PaddingValues(bottom = 100.dp + navBarBottomPadding)
     ) {
 
         // ── Hero Header + Auto-scroll Carousel ──────────────────────────────

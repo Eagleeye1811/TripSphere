@@ -241,9 +241,7 @@ fun TripSphereNavGraph(
                 budget = budget,
                 imageUrl = imageUrl,
                 onNavigateToOverview = { tripId ->
-                    navController.navigate(Screen.TripOverview.createRoute(tripId)) {
-                        popUpTo(Screen.Home.route)
-                    }
+                    navController.navigate(Screen.TripOverview.createRoute(tripId))
                 },
                 onNavigateBack = { navController.popBackStack() }
             )

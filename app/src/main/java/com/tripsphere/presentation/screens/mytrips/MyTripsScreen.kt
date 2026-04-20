@@ -66,11 +66,13 @@ fun MyTripsScreen(
 
     val allTrips = uiState.ongoingTrips + uiState.upcomingTrips + uiState.completedTrips
 
+    val navBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(bottom = 120.dp),
+        contentPadding = PaddingValues(bottom = 100.dp + navBarBottomPadding),
         verticalArrangement = Arrangement.spacedBy(0.dp) // spacing handled per-item
     ) {
         // ── Hero Header + Search ───────────────────────────────────────────────

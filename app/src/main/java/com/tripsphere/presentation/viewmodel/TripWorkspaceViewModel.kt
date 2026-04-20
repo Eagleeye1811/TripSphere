@@ -176,4 +176,10 @@ class TripWorkspaceViewModel @Inject constructor(
             }
         }
     }
+
+    /** Called immediately after the navigation to TripOverview so that returning
+     *  to this screen doesn't re-trigger the LaunchedEffect and bounce back. */
+    fun clearSavedTripId() {
+        _uiState.update { it.copy(savedTripId = null) }
+    }
 }

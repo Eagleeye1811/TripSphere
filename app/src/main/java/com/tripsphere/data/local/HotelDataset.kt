@@ -282,6 +282,154 @@ object HotelDataset {
             HotelEntry("SWS012", "Mont Cervin Palace Zermatt", "Hotel", 5, "Bahnhofstrasse 31, 3920 Zermatt, Switzerland", 46.0214, 7.7494, "+41-27-966-8888", "https://www.seilaclub.ch/montcervin", "₹50,000–1,30,000/night", "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=700&q=80"),
         ))
 
+        // ── AMSTERDAM, Netherlands ────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("AMS001", "Waldorf Astoria Amsterdam", "Hotel", 5, "Herengracht 542-556, 1017 CG Amsterdam", 52.3618, 4.8983, "+31-20-718-4600", "https://www.waldorfastoria.com/amsterdam", "₹45,000–1,10,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("AMS002", "Pulitzer Amsterdam", "Hotel", 5, "Prinsengracht 315-331, 1016 GZ Amsterdam", 52.3700, 4.8845, "+31-20-523-5235", "https://www.pulitzeramsterdam.com", "₹30,000–75,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("AMS003", "The Dylan Amsterdam", "Hotel", 5, "Keizersgracht 384, 1016 GB Amsterdam", 52.3677, 4.8835, "+31-20-530-2010", "https://www.dylanamsterdam.com", "₹35,000–85,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("AMS004", "Conservatorium Hotel", "Hotel", 5, "Van Baerlestraat 27, 1071 AN Amsterdam", 52.3577, 4.8777, "+31-20-570-0000", "https://www.conservatoriumhotel.com", "₹28,000–70,000/night", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=700&q=80"),
+            HotelEntry("AMS005", "Hotel V Nesplein", "Hotel", 4, "Nes 49, 1012 KD Amsterdam", 52.3731, 4.8965, "+31-20-662-3233", "https://www.hotelv.nl", "₹22,000–50,000/night", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=700&q=80"),
+            HotelEntry("AMS006", "Hotel Arena Amsterdam", "Hotel", 4, "'s-Gravesandestraat 51, 1092 AA Amsterdam", 52.3578, 4.9114, "+31-20-850-2400", "https://www.hotelarena.nl", "₹12,000–25,000/night", "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&q=80"),
+            HotelEntry("AMS007", "ibis Amsterdam Centre", "Hotel", 2, "Warmoestraat 25, 1012 HT Amsterdam", 52.3749, 4.8993, "+31-20-721-9172", "https://www.ibis.com", "₹6,000–11,000/night", "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=700&q=80"),
+            HotelEntry("AMS008", "Meininger Amsterdam City West", "Hostel", null, "Orlyplein 1, 1043 DP Amsterdam", 52.3884, 4.8393, "+31-20-760-3400", "https://www.meininger-hotels.com/amsterdam", "₹2,500–5,000/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+        ))
+
+        // ── PRAGUE, Czech Republic ─────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("PRG001", "Four Seasons Hotel Prague", "Hotel", 5, "Veleslavínova 2a, 110 00 Prague 1", 50.0856, 14.4128, "+420-221-427-000", "https://www.fourseasons.com/prague", "₹35,000–90,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("PRG002", "Mandarin Oriental Prague", "Hotel", 5, "Nebovidská 459/1, 118 00 Prague", 50.0872, 14.4057, "+420-233-088-888", "https://www.mandarinoriental.com/prague", "₹30,000–80,000/night", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=700&q=80"),
+            HotelEntry("PRG003", "Grand Hotel Bohemia", "Hotel", 5, "Králodvorská 4, 110 00 Prague 1", 50.0877, 14.4233, "+420-234-608-111", "https://www.grandhotelbohemia.cz", "₹28,000–65,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("PRG004", "The Emblem Hotel Prague", "Hotel", 5, "Platnéřská 19, 110 00 Prague 1", 50.0879, 14.4173, "+420-226-202-500", "https://www.emblemprague.com", "₹22,000–55,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("PRG005", "Hotel Josef Prague", "Hotel", 4, "Rybná 20, 110 00 Prague 1", 50.0885, 14.4268, "+420-221-700-111", "https://www.hoteljosef.com", "₹12,000–25,000/night", "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&q=80"),
+            HotelEntry("PRG006", "MOOo by the Castle", "Hotel", 3, "Keplerova 5, 118 00 Prague 1", 50.0918, 14.3932, "+420-220-513-930", "https://www.hotelmooo.com", "₹8,000–16,000/night", "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=700&q=80"),
+            HotelEntry("PRG007", "Czech Inn Hostel", "Hostel", null, "Francouzská 76, 101 00 Prague 10", 50.0750, 14.4524, "+420-267-267-600", "https://www.czech-inn.com", "₹2,000–4,500/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+            HotelEntry("PRG008", "Mosaic House Prague", "Hostel", null, "Odborů 4, 120 00 Prague 2", 50.0720, 14.4213, "+420-246-008-324", "https://www.mosaichouse.com", "₹2,200–5,000/night", "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=700&q=80"),
+        ))
+
+        // ── BANFF, Canada ──────────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("BNF001", "Fairmont Banff Springs", "Hotel", 5, "405 Spray Ave, Banff, AB T1L 1J4", 51.1648, -115.5586, "+1-403-762-2211", "https://www.fairmont.com/banff-springs", "₹45,000–1,20,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("BNF002", "Fairmont Chateau Lake Louise", "Hotel", 5, "111 Lake Louise Dr, Lake Louise, AB T0L 1E0", 51.4254, -116.1773, "+1-403-522-3511", "https://www.fairmont.com/lake-louise", "₹55,000–1,50,000/night", "https://images.unsplash.com/photo-1543716091-a840c05249ec?w=700&q=80"),
+            HotelEntry("BNF003", "Rimrock Resort Hotel Banff", "Hotel", 4, "300 Mountain Ave, Banff, AB T1L 1J2", 51.1564, -115.5723, "+1-403-762-3356", "https://www.rimrockresort.com", "₹25,000–60,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("BNF004", "The Juniper Hotel & Bistro", "Hotel", 3, "1 Juniper Way, Banff, AB T1L 1B3", 51.1767, -115.5744, "+1-403-762-2281", "https://www.thejuniper.com", "₹12,000–25,000/night", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=700&q=80"),
+            HotelEntry("BNF005", "Banff Aspen Lodge", "Hotel", 3, "401 Banff Ave, Banff, AB T1L 1A7", 51.1789, -115.5618, "+1-403-762-4401", "https://www.banffaspenlodge.com", "₹10,000–20,000/night", "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=700&q=80"),
+            HotelEntry("BNF006", "Storm Mountain Lodge", "Hotel", 3, "Bow Valley Pkwy, Banff, AB T1L 1A3", 51.1964, -115.6972, "+1-403-762-4155", "https://www.stormmountainlodge.com", "₹14,000–28,000/night", "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=700&q=80"),
+            HotelEntry("BNF007", "HI Banff Alpine Centre", "Hostel", null, "801 Hidden Ridge Way, Banff, AB T1L 1B9", 51.1736, -115.5504, "+1-403-762-4122", "https://www.hihostels.com/banff", "₹3,000–6,000/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+        ))
+
+        // ── QUEENSTOWN, New Zealand ────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("QTN001", "Eichardt's Private Hotel", "Hotel", 5, "Marine Parade, Queenstown 9300", -45.0311, 168.6600, "+64-3-441-0450", "https://www.eichardts.com", "₹40,000–1,00,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("QTN002", "The Rees Hotel Queenstown", "Hotel", 5, "377 Lake Esplanade, Queenstown 9300", -45.0332, 168.6628, "+64-3-450-1100", "https://www.therees.co.nz", "₹30,000–75,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("QTN003", "Millbrook Resort Arrowtown", "Hotel", 4, "Malaghans Rd, Arrowtown 9302", -44.9384, 168.8297, "+64-3-441-7000", "https://www.millbrook.co.nz", "₹22,000–55,000/night", "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=700&q=80"),
+            HotelEntry("QTN004", "Novotel Queenstown Lakeside", "Hotel", 4, "Marine Parade, Queenstown 9300", -45.0321, 168.6584, "+64-3-442-7750", "https://www.novotel.com/queenstown", "₹15,000–32,000/night", "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&q=80"),
+            HotelEntry("QTN005", "Peppers Beacon Hotel", "Hotel", 4, "6-8 Lake Side Rd, Queenstown 9300", -45.0298, 168.6612, "+64-3-450-0400", "https://www.peppers.co.nz/beacon", "₹18,000–40,000/night", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=700&q=80"),
+            HotelEntry("QTN006", "Queenstown YHA", "Hostel", null, "88-90 Lake Esplanade, Queenstown 9300", -45.0329, 168.6563, "+64-3-442-8413", "https://www.yha.co.nz/queenstown", "₹2,500–5,500/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+            HotelEntry("QTN007", "Base Queenstown Hostel", "Hostel", null, "40 Shotover St, Queenstown 9300", -45.0309, 168.6617, "+64-3-441-8090", "https://www.stayatbase.com/queenstown", "₹2,000–4,500/night", "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=700&q=80"),
+        ))
+
+        // ── REYKJAVÍK / ICELAND ────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("ICL001", "101 Hotel Reykjavík", "Hotel", 5, "Hverfisgata 10, 101 Reykjavík", 64.1448, -21.9311, "+354-580-0101", "https://www.101hotel.is", "₹30,000–80,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("ICL002", "ION Adventure Hotel", "Hotel", 4, "Nesjavellir, 801 Selfoss, South Iceland", 64.0856, -21.2614, "+354-482-3415", "https://www.ioniceland.is", "₹35,000–90,000/night", "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=700&q=80"),
+            HotelEntry("ICL003", "Hótel Rangá", "Hotel", 4, "Rangárþing eystra, 851 Hella", 63.8382, -20.4073, "+354-487-5700", "https://www.hotelranga.is", "₹22,000–55,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("ICL004", "Hotel Borg Reykjavík", "Hotel", 4, "Pósthússtræti 11, 101 Reykjavík", 64.1478, -21.9344, "+354-551-1440", "https://www.hotelborg.is", "₹25,000–60,000/night", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=700&q=80"),
+            HotelEntry("ICL005", "Centerhotel Arnarhvoll", "Hotel", 4, "Ingólfsstræti 1, 101 Reykjavík", 64.1499, -21.9235, "+354-595-8540", "https://www.centerhotels.com/arnarhvoll", "₹18,000–40,000/night", "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&q=80"),
+            HotelEntry("ICL006", "Fosshotel Reykjavík", "Hotel", 3, "Þórunnartún 1, 105 Reykjavík", 64.1399, -21.9105, "+354-562-4000", "https://www.islandshotel.is/fosshotel-reykjavik", "₹12,000–25,000/night", "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=700&q=80"),
+            HotelEntry("ICL007", "Kex Hostel Reykjavík", "Hostel", null, "Skúlagata 28, 101 Reykjavík", 64.1499, -21.9405, "+354-561-6060", "https://www.kexhostel.is", "₹2,500–5,500/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+        ))
+
+        // ── PHUKET, Thailand ───────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("PHK001", "Amanpuri Phuket", "Hotel", 5, "Pansea Beach, Cherngtalay, Phuket 83110", 8.0456, 98.2734, "+66-76-324-333", "https://www.aman.com/resorts/amanpuri", "₹80,000–2,50,000/night", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80"),
+            HotelEntry("PHK002", "Banyan Tree Phuket", "Hotel", 5, "33/27 Moo 4, Srisoonthorn Rd, Cherngtalay, Phuket 83110", 8.0134, 98.2928, "+66-76-372-400", "https://www.banyantree.com/phuket", "₹45,000–1,20,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("PHK003", "The Nai Harn Phuket", "Hotel", 5, "23/3 Vises Rd, Rawai, Phuket 83130", 7.7680, 98.3025, "+66-76-380-200", "https://www.thenaiharn.com", "₹30,000–80,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("PHK004", "Trisara Phuket", "Hotel", 5, "60/1 Moo 6, Srisoonthorn Rd, Cherngtalay, Phuket 83110", 8.0538, 98.2805, "+66-76-310-100", "https://www.trisara.com", "₹55,000–1,80,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("PHK005", "Katathani Phuket Beach Resort", "Hotel", 4, "14 Kata Noi Rd, Kata Noi, Phuket 83100", 7.8244, 98.2981, "+66-76-330-124", "https://www.katathani.com", "₹15,000–35,000/night", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=700&q=80"),
+            HotelEntry("PHK006", "Holiday Inn Phuket Patong", "Hotel", 4, "21 Jungceylon, Patong, Phuket 83150", 7.8993, 98.2959, "+66-76-370-200", "https://www.ihg.com/holidayinn/phuket", "₹10,000–22,000/night", "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&q=80"),
+            HotelEntry("PHK007", "ibis Phuket Patong", "Hotel", 2, "52 Thaweewong Rd, Patong, Phuket 83150", 7.8956, 98.2962, "+66-76-689-999", "https://www.ibis.com/phuket", "₹4,500–8,000/night", "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=700&q=80"),
+            HotelEntry("PHK008", "Lub d Phuket Patong", "Hostel", null, "42 Phang Muang Sai Kor Rd, Patong, Phuket 83150", 7.8908, 98.2992, "+66-76-601-400", "https://www.lubd.com/phuket", "₹2,000–4,500/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+        ))
+
+        // ── KOH SAMUI, Thailand ────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("KSM001", "Four Seasons Resort Koh Samui", "Hotel", 5, "219 Moo 5, Ang Thong, Koh Samui, Surat Thani 84140", 9.5796, 100.0665, "+66-77-243-000", "https://www.fourseasons.com/kohsamui", "₹55,000–1,50,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("KSM002", "Vana Belle Koh Samui", "Hotel", 5, "9/99 Moo 3, Bophut, Koh Samui 84320", 9.5511, 100.0158, "+66-77-915-555", "https://www.marriott.com/vana-belle", "₹40,000–1,00,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("KSM003", "SALA Samui Chaweng Beach", "Hotel", 5, "110/3 Moo 2, Chaweng Beach, Koh Samui 84320", 9.5333, 100.0611, "+66-77-422-222", "https://www.salaresorts.com/samui", "₹25,000–65,000/night", "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=700&q=80"),
+            HotelEntry("KSM004", "Centara Grand Beach Resort Samui", "Hotel", 5, "38/2 Moo 3, Borpud, Koh Samui 84320", 9.5411, 100.0598, "+66-77-230-500", "https://www.centarahotelsresorts.com/samui", "₹22,000–55,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("KSM005", "The Library Koh Samui", "Hotel", 4, "14/1 Moo 2, Chaweng Beach Rd, Koh Samui 84320", 9.5309, 100.0588, "+66-77-422-767", "https://www.thelibrary.co.th", "₹20,000–48,000/night", "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&q=80"),
+            HotelEntry("KSM006", "ibis Samui Bophut", "Hotel", 3, "Moo 1, Bophut Rd, Koh Samui 84320", 9.5481, 100.0152, "+66-77-908-800", "https://www.ibis.com/samui", "₹5,000–10,000/night", "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=700&q=80"),
+        ))
+
+        // ── TULUM, Mexico ──────────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("TLM001", "Azulik Tulum", "Hotel", 5, "Carretera Boca Paila Km 5, Tulum, Quintana Roo 77780", 20.1724, -87.4642, "+52-984-206-0701", "https://www.azulik.com", "₹50,000–1,50,000/night", "https://images.unsplash.com/photo-1552799446-159ba9523315?w=700&q=80"),
+            HotelEntry("TLM002", "Be Tulum Boutique Hotel", "Hotel", 5, "Carretera Tulum-Boca Paila Km 3.5, Tulum 77780", 20.1813, -87.4596, "+52-984-875-5110", "https://www.betulum.com", "₹45,000–1,20,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("TLM003", "Sanará Tulum", "Hotel", 4, "Carretera Tulum-Boca Paila Km 2, Tulum 77780", 20.1865, -87.4561, "+52-984-160-8060", "https://www.sanatulum.com", "₹30,000–75,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("TLM004", "Papaya Playa Project", "Hotel", 4, "Carretera Boca Paila Km 4.5, Tulum 77780", 20.1748, -87.4628, "+52-984-116-2869", "https://www.papayaplayaproject.com", "₹20,000–55,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("TLM005", "Aldea Canzul Hotel Tulum", "Hotel", 3, "Avenida Sol Oriente, Tulum 77760", 20.2111, -87.4622, "+52-984-871-2408", null, "₹8,000–18,000/night", "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=700&q=80"),
+            HotelEntry("TLM006", "Vagabundo Hostel Tulum", "Hostel", null, "Avenida Tulum, Tulum Centro 77760", 20.2136, -87.4658, "+52-984-871-2506", null, "₹1,500–3,500/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+        ))
+
+        // ── SEYCHELLES ─────────────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("SEY001", "Six Senses Zil Pasyon", "Hotel", 5, "Félicité Island, Seychelles", -4.3158, 55.8618, "+248-467-1000", "https://www.sixsenses.com/zilpasyon", "₹2,00,000–8,00,000/night", "https://images.unsplash.com/photo-1589979481223-deb893043163?w=700&q=80"),
+            HotelEntry("SEY002", "Four Seasons Resort Seychelles", "Hotel", 5, "Petite Anse, Mahé, Seychelles", -4.7372, 55.4953, "+248-439-3000", "https://www.fourseasons.com/seychelles", "₹1,00,000–3,50,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("SEY003", "Raffles Seychelles Praslin", "Hotel", 5, "Anse Takamaka, Praslin, Seychelles", -4.3208, 55.7418, "+248-429-6000", "https://www.raffles.com/seychelles", "₹80,000–2,50,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("SEY004", "Constance Lemuria Resort", "Hotel", 5, "Anse Kerlan, Praslin, Seychelles", -4.2917, 55.7097, "+248-428-8000", "https://www.constancehotels.com/lemuria", "₹70,000–2,00,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("SEY005", "Anantara Maia Seychelles Villas", "Hotel", 5, "Anse Louis, Mahé, Seychelles", -4.7578, 55.4653, "+248-439-5000", "https://www.anantara.com/maia-seychelles", "₹90,000–2,80,000/night", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=700&q=80"),
+            HotelEntry("SEY006", "L'Union Estate Guesthouse", "Guest House", null, "La Digue, Seychelles", -4.3634, 55.8340, "+248-423-4240", null, "₹15,000–30,000/night", "https://images.unsplash.com/photo-1509660933844-6910e12765a0?w=700&q=80"),
+        ))
+
+        // ── MAUI, USA ──────────────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("MAU001", "Four Seasons Resort Maui at Wailea", "Hotel", 5, "3900 Wailea Alanui Dr, Wailea, Maui, HI 96753", 20.6825, -156.4404, "+1-808-874-8000", "https://www.fourseasons.com/maui", "₹80,000–2,50,000/night", "https://images.unsplash.com/photo-1507876466758-e54b3bdbe44c?w=700&q=80"),
+            HotelEntry("MAU002", "Andaz Maui at Wailea Resort", "Hotel", 5, "3550 Wailea Alanui Dr, Wailea, Maui, HI 96753", 20.6897, -156.4427, "+1-808-573-1234", "https://www.hyatt.com/andaz-maui", "₹55,000–1,50,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("MAU003", "Hotel Wailea", "Hotel", 5, "555 Kaukahi St, Wailea, Maui, HI 96753", 20.6815, -156.4294, "+1-808-874-0500", "https://www.hotelwailea.com", "₹65,000–1,80,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("MAU004", "Travaasa Hana", "Hotel", 4, "5031 Hana Hwy, Hana, Maui, HI 96713", 20.7574, -155.9895, "+1-808-270-5000", "https://www.travaasa.com/hana", "₹45,000–1,20,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("MAU005", "Westin Maui Resort & Spa", "Hotel", 4, "2365 Kaanapali Pkwy, Lahaina, Maui, HI 96761", 20.9195, -156.6955, "+1-808-667-2525", "https://www.marriott.com/westin-maui", "₹25,000–65,000/night", "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&q=80"),
+            HotelEntry("MAU006", "Maui Seaside Hotel", "Hotel", 3, "100 W Kaahumanu Ave, Kahului, Maui, HI 96732", 20.8916, -156.4765, "+1-808-877-3311", "https://www.mauiseasidehotel.com", "₹8,000–18,000/night", "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=700&q=80"),
+        ))
+
+        // ── NORWEGIAN FJORDS / BERGEN ──────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("NOR001", "Hotel Union Øye", "Hotel", 5, "Norangsfjorden, 6196 Øye, Norway", 62.1484, 6.9614, "+47-70-06-21-00", "https://www.unionoye.no", "₹35,000–90,000/night", "https://images.unsplash.com/photo-1520769490027-f729c0d295e6?w=700&q=80"),
+            HotelEntry("NOR002", "Strand Hotel Bergen", "Hotel", 4, "Strandkaien 2-4, 5013 Bergen, Norway", 60.3973, 5.3226, "+47-55-59-34-00", "https://www.choice.no/strandbergen", "₹18,000–40,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("NOR003", "Fretheim Hotel Flåm", "Hotel", 3, "Fretheim, 5742 Flåm, Norway", 60.8635, 7.1176, "+47-57-63-63-00", "https://www.fretheim-hotel.no", "₹18,000–38,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("NOR004", "Walaker Hotel Solvorn", "Hotel", 3, "Solvorn, 6877 Luster, Norway", 61.3414, 7.3138, "+47-57-68-20-80", "https://www.walaker.com", "₹20,000–42,000/night", "https://images.unsplash.com/photo-1531248020715-f2ee21f88b5e?w=700&q=80"),
+            HotelEntry("NOR005", "Thon Hotel Bristol Bergen", "Hotel", 4, "Torgallmenningen 11, 5014 Bergen, Norway", 60.3921, 5.3250, "+47-55-30-32-00", "https://www.thonhotels.no/bristol-bergen", "₹15,000–30,000/night", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=700&q=80"),
+            HotelEntry("NOR006", "Fosshaugane Campus Hostel", "Hostel", null, "Fretheim 4, 5742 Flåm, Norway", 60.8631, 7.1172, "+47-57-63-25-00", null, "₹3,000–6,000/night", "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=700&q=80"),
+        ))
+
+        // ── COSTA RICA ─────────────────────────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("CRC001", "Nayara Springs Arenal", "Hotel", 5, "Arenal Volcano National Park, Alajuela, Costa Rica", 10.4696, -84.6990, "+506-2479-1600", "https://www.nayarasprings.com", "₹65,000–1,80,000/night", "https://images.unsplash.com/photo-1518638150340-f706e86654de?w=700&q=80"),
+            HotelEntry("CRC002", "Hacienda AltaGracia Aparta Hotel", "Hotel", 5, "Cajón District, Pérez Zeledón, San José, Costa Rica", 9.3282, -83.4614, "+1-888-777-4110", "https://www.haciendaaltagracia.com", "₹80,000–2,50,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("CRC003", "Lapa Rios Lodge Osa Peninsula", "Hotel", 4, "Osa Peninsula, Puntarenas, Costa Rica", 8.3945, -83.4598, "+506-4070-0606", "https://www.laparios.com", "₹35,000–90,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("CRC004", "Finca Rosa Blanca Coffee Plantation", "Hotel", 4, "Santa Bárbara, Heredia, Costa Rica", 9.9914, -84.1193, "+506-2269-9392", "https://www.fincarosablanca.com", "₹25,000–60,000/night", "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=700&q=80"),
+            HotelEntry("CRC005", "Hotel Bougainvillea San José", "Hotel", 3, "800 m Norte, Heredia, San José, Costa Rica", 9.9984, -84.0789, "+506-2244-1414", "https://www.bougainvillea.co.cr", "₹8,000–18,000/night", "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=700&q=80"),
+            HotelEntry("CRC006", "Selina Manuel Antonio", "Hostel", null, "Av. Central, Manuel Antonio, Puntarenas, Costa Rica", 9.3910, -84.1642, "+1-888-735-4621", "https://www.selina.com/costa-rica/manuel-antonio", "₹3,000–7,000/night", "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=700&q=80"),
+        ))
+
+        // ── NEPAL / KATHMANDU (Everest Base Camp & Himalayas) ─────────────────
+        addAll(listOf(
+            HotelEntry("NPL001", "Dwarika's Hotel Kathmandu", "Hotel", 5, "Battisputali, Kathmandu 44600, Nepal", 27.7133, 85.3367, "+977-1-4479-488", "https://www.dwarikas.com", "₹30,000–80,000/night", "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=700&q=80"),
+            HotelEntry("NPL002", "Hyatt Regency Kathmandu", "Hotel", 5, "Taragaon, Boudha, Kathmandu 44600, Nepal", 27.7168, 85.3606, "+977-1-4491-234", "https://www.hyatt.com/hyatt-regency-kathmandu", "₹22,000–55,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("NPL003", "Yak & Yeti Hotel Kathmandu", "Hotel", 4, "Durbar Marg, Kathmandu 44600, Nepal", 27.7115, 85.3154, "+977-1-4248-999", "https://www.yakandyeti.com", "₹15,000–35,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("NPL004", "Hotel Everest View", "Hotel", 3, "Syangboche, Namche Bazaar, Solukhumbu, Nepal", 27.8121, 86.7175, "+977-1-4488-345", "https://www.hoteleverestview.com", "₹18,000–40,000/night", "https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=700&q=80"),
+            HotelEntry("NPL005", "Namche Bazaar Guesthouse", "Guest House", null, "Namche Bazaar, Solukhumbu, Nepal", 27.8063, 86.7155, "+977-38-540-140", null, "₹4,000–9,000/night", "https://images.unsplash.com/photo-1509660933844-6910e12765a0?w=700&q=80"),
+            HotelEntry("NPL006", "Summit Hotel Kathmandu", "Hotel", 4, "Kupondol, Lalitpur, Kathmandu 44700, Nepal", 27.6823, 85.3154, "+977-1-5521-810", "https://www.summithotel.com.np", "₹12,000–28,000/night", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=700&q=80"),
+        ))
+
+        // ── PATAGONIA / TORRES DEL PAINE ───────────────────────────────────────
+        addAll(listOf(
+            HotelEntry("PTG001", "explora Patagonia", "Hotel", 5, "Torres del Paine National Park, Magallanes, Chile", -51.0128, -72.9741, "+56-2-2395-2800", "https://www.explora.com/patagonia", "₹1,00,000–3,00,000/night", "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=700&q=80"),
+            HotelEntry("PTG002", "Singular Patagonia", "Hotel", 5, "Puerto Bories, Puerto Natales, Magallanes, Chile", -51.7196, -72.5064, "+56-61-2722-030", "https://www.thesingular.com/patagonia", "₹65,000–1,80,000/night", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"),
+            HotelEntry("PTG003", "EcoCamp Patagonia", "Hotel", 4, "Torres del Paine National Park, Magallanes, Chile", -51.1534, -72.9484, "+56-2-2923-5950", "https://www.ecocamp.travel", "₹55,000–1,50,000/night", "https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=700&q=80"),
+            HotelEntry("PTG004", "Las Torres Patagonia", "Hotel", 4, "Torres del Paine National Park, Magallanes, Chile", -51.1082, -72.8726, "+56-61-2617-450", "https://www.lastorres.com", "₹35,000–90,000/night", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=700&q=80"),
+            HotelEntry("PTG005", "Hostal Estanislava Puerto Natales", "Hostel", null, "Baquedano 155, Puerto Natales, Magallanes, Chile", -51.7283, -72.4916, "+56-61-2411-945", null, "₹2,000–5,000/night", "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=700&q=80"),
+        ))
+
         // ── AMALFI COAST, Italy ────────────────────────────────────────────────
         addAll(listOf(
             HotelEntry("AML001", "Belmond Hotel Caruso", "Hotel", 5, "Piazza San Giovanni del Toro 2, 84010 Ravello SA, Italy", 40.6480, 14.6120, "+39-089-858-801", "https://www.belmond.com/hotel-caruso", "₹55,000–1,40,000/night", "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=700&q=80"),
