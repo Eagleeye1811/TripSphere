@@ -340,7 +340,9 @@ fun LoginScreen(
 
             // Sign up link
             val signupText = buildAnnotatedString {
-                append("Don't have an account? ")
+                withStyle(SpanStyle(color = Color.White)) {
+                    append("Don't have an account? ")
+                }
                 withStyle(SpanStyle(color = TripBlue, fontWeight = FontWeight.Bold)) {
                     append("Sign Up")
                 }

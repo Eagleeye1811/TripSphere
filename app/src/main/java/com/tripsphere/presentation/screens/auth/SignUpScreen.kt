@@ -203,7 +203,9 @@ fun SignUpScreen(
             Spacer(Modifier.height(24.dp))
 
             val loginText = buildAnnotatedString {
-                append("Already have an account? ")
+                withStyle(SpanStyle(color = Color.White)) {
+                    append("Already have an account? ")
+                }
                 withStyle(SpanStyle(color = TripBlue, fontWeight = FontWeight.Bold)) {
                     append("Log In")
                 }

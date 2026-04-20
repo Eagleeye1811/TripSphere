@@ -119,7 +119,8 @@ fun CreateTripScreen(
             Text(
                 "Where are you going?",
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
 
             // Destination field
