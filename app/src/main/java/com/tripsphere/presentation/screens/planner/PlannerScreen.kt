@@ -56,7 +56,7 @@ fun PlannerScreen(
             .sortedBy { popularPickIds.indexOf(it.id) }
     }
 
-    val recentTrips = (uiState.upcomingTrips + uiState.ongoingTrips).take(3)
+    val recentTrips = (uiState.ongoingTrips + uiState.upcomingTrips).distinctBy { it.id }.take(3)
 
     val navBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 

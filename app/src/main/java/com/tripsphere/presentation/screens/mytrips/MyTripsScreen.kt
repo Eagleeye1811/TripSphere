@@ -309,8 +309,8 @@ fun MyTripsScreen(
 
             // Ongoing
             if (uiState.ongoingTrips.isNotEmpty()) {
-                item { SectionLabel("🟢  Active", TripAccent) }
-                items(uiState.ongoingTrips, key = { it.id }) { trip ->
+                item { SectionLabel("✈️  Active", Color(0xFF2E7D32)) }
+                items(uiState.ongoingTrips, key = { "ongoing_${it.id}" }) { trip ->
                     SwipeToDismissTripItem(
                         trip = trip,
                         onDelete = { viewModel.deleteTrip(trip) },
@@ -322,7 +322,7 @@ fun MyTripsScreen(
             // Upcoming
             if (uiState.upcomingTrips.isNotEmpty()) {
                 item { SectionLabel("🗓  Upcoming", TripBlue) }
-                items(uiState.upcomingTrips, key = { it.id }) { trip ->
+                items(uiState.upcomingTrips, key = { "upcoming_${it.id}" }) { trip ->
                     SwipeToDismissTripItem(
                         trip = trip,
                         onDelete = { viewModel.deleteTrip(trip) },
@@ -334,7 +334,7 @@ fun MyTripsScreen(
             // Completed
             if (uiState.completedTrips.isNotEmpty()) {
                 item { SectionLabel("✅  Completed", Color(0xFF2E7D32)) }
-                items(uiState.completedTrips, key = { it.id }) { trip ->
+                items(uiState.completedTrips, key = { "completed_${it.id}" }) { trip ->
                     SwipeToDismissTripItem(
                         trip = trip,
                         onDelete = { viewModel.deleteTrip(trip) },

@@ -483,7 +483,31 @@ fun DestinationDetailScreen(
             )
 
             IconButton(
-                onClick = { },
+                onClick = {
+                    val shareText = buildString {
+                        appendLine("🌍 ${destination.name}, ${destination.country}")
+                        if (destination.rating > 0) appendLine("⭐ Rating: ${destination.rating}/5")
+                        if (destination.bestTimeToVisit.isNotBlank()) appendLine("📅 Best time to visit: ${destination.bestTimeToVisit}")
+                        if (destination.budgetEstimate.isNotBlank()) appendLine("💰 Estimated budget: ${destination.budgetEstimate}")
+                        if (destination.description.isNotBlank()) {
+                            appendLine()
+                            appendLine(destination.description)
+                        }
+                        if (destination.topAttractions.isNotEmpty()) {
+                            appendLine()
+                            appendLine("🏛️ Top Attractions:")
+                            destination.topAttractions.take(5).forEach { appendLine("  • $it") }
+                        }
+                        appendLine()
+                        append("Discovered via TripSphere ✈️")
+                    }
+                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, "Check out ${destination.name}!")
+                        putExtra(android.content.Intent.EXTRA_TEXT, shareText)
+                    }
+                    context.startActivity(android.content.Intent.createChooser(intent, "Share Destination"))
+                },
                 modifier = Modifier
                     .size(40.dp)
                     .background(Color.Black.copy(alpha = 0.4f), shape = RoundedCornerShape(12.dp))

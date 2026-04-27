@@ -112,10 +112,12 @@ fun TripOverviewScreen(
         return
     }
 
+    val navBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 100.dp)
+            contentPadding = PaddingValues(bottom = 130.dp + navBarBottomPadding)
         ) {
             // Hero image
             item {
@@ -211,27 +213,74 @@ fun TripOverviewScreen(
                         if (uiState.itineraries.isNotEmpty()) {
                             Text("Itinerary Preview", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(8.dp))
-                            uiState.itineraries.take(5).forEach { item ->
+                            val itineraryByDay = uiState.itineraries.groupBy { it.day }
+                            itineraryByDay.keys.sorted().forEach { day ->
+                                val dayItems = itineraryByDay[day] ?: emptyList()
+                                val dayColor = when (day % 5) {
+                                    1    -> Color(0xFF1565C0)
+                                    2    -> Color(0xFFE65100)
+                                    3    -> Color(0xFF2E7D32)
+                                    4    -> Color(0xFF6A1B9A)
+                                    else -> Color(0xFF00695C)
+                                }
+                                // Day header
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = if (day == itineraryByDay.keys.min()) 0.dp else 12.dp, bottom = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = TripBlue.copy(alpha = 0.12f)
-                                    ) {
+                                    Surface(shape = RoundedCornerShape(6.dp), color = dayColor) {
                                         Text(
-                                            "Day ${item.day} · ${item.time}",
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            "Day $day",
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = TripBlue,
+                                            color = Color.White,
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
                                     Spacer(Modifier.width(8.dp))
-                                    Text(item.activity, style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        "${dayItems.size} place${if (dayItems.size != 1) "s" else ""}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = dayColor
+                                    )
                                 }
-                                Divider(color = TextHint.copy(alpha = 0.2f))
+                                // Activities for this day
+                                dayItems.forEachIndexed { index, item ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = dayColor.copy(alpha = 0.1f)
+                                        ) {
+                                            Text(
+                                                item.time,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = dayColor,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            item.activity,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    if (index < dayItems.size - 1) {
+                                        Divider(
+                                            modifier = Modifier.padding(start = 8.dp),
+                                            color = TextHint.copy(alpha = 0.15f)
+                                        )
+                                    }
+                                }
+                                Divider(color = TextHint.copy(alpha = 0.3f), modifier = Modifier.padding(top = 8.dp))
                             }
                         }
 
@@ -322,6 +371,7 @@ fun TripOverviewScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {

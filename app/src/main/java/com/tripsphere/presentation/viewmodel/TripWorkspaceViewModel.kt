@@ -68,8 +68,9 @@ class TripWorkspaceViewModel @Inject constructor(
      */
     fun initializeBudget(totalBudget: Double) {
         if (_uiState.value.budgetInitialised) return
+        val autoFillBudget = totalBudget * 0.70  // pre-fill only 70%; remaining 30% left for user
         val allocations = DEFAULT_SPLIT.mapValues { (_, pct) ->
-            (totalBudget * pct * 100).toLong() / 100.0  // round to 2 dp
+            (autoFillBudget * pct * 100).toLong() / 100.0  // round to 2 dp
         }
         _uiState.update { it.copy(expenseAllocations = allocations, budgetInitialised = true) }
     }

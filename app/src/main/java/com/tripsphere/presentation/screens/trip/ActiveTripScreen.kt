@@ -400,6 +400,7 @@ fun ActiveTripScreen(
                 onClick = { showAddExpense = true },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 12.dp)
                     .height(50.dp),
                 shape = RoundedCornerShape(25.dp),
