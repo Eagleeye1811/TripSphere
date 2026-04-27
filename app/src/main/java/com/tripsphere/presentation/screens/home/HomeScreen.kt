@@ -370,7 +370,7 @@ private fun HeroCarouselSection(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GlassIconButton(icon = Icons.Default.Search, onClick = onSearchClick)
-                GlassIconButton(icon = Icons.Default.Notifications, onClick = onProfileClick)
+                GlassIconButton(icon = Icons.Default.Person, onClick = onProfileClick)
             }
         }
 

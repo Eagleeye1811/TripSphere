@@ -147,7 +147,7 @@ fun TripWorkspaceScreen(
                         Text(
                             title,
                             style = MaterialTheme.typography.labelMedium,
-                            color = if (selectedTab == index) TripBlue else TextSecondary
+                            color = if (selectedTab == index) TripBlue else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 )
@@ -463,12 +463,13 @@ private fun AddAttractionSheet(
                 Text(
                     "Add to Day $day",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     destination.substringBefore(","),
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(12.dp))
 
@@ -511,12 +512,12 @@ private fun AddAttractionSheet(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            placeholder = { Text("Search places…", color = TextHint) },
+                            placeholder = { Text("Search places…", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
                             leadingIcon = { Icon(Icons.Default.Search, null, tint = TripBlue) },
                             trailingIcon = {
                                 if (searchQuery.isNotBlank()) {
                                     IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Default.Close, null, tint = TextHint)
+                                        Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                             },
@@ -527,7 +528,7 @@ private fun AddAttractionSheet(
                             keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = TripBlue,
-                                unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
                             )
                         )
                         Spacer(Modifier.height(10.dp))
@@ -566,9 +567,9 @@ private fun AddAttractionSheet(
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.SearchOff, null, tint = TextHint, modifier = Modifier.size(40.dp))
+                                Icon(Icons.Default.SearchOff, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(40.dp))
                                 Spacer(Modifier.height(8.dp))
-                                Text("No places match your search", style = MaterialTheme.typography.bodyMedium, color = TextHint)
+                                Text("No places match your search", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     } else {
@@ -602,12 +603,12 @@ private fun AddAttractionSheet(
                         OutlinedTextField(
                             value = hotelSearch,
                             onValueChange = { hotelSearch = it },
-                            placeholder = { Text("Search hotels…", color = TextHint) },
+                            placeholder = { Text("Search hotels…", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
                             leadingIcon = { Icon(Icons.Default.Search, null, tint = TripBlue) },
                             trailingIcon = {
                                 if (hotelSearch.isNotBlank()) {
                                     IconButton(onClick = { hotelSearch = "" }) {
-                                        Icon(Icons.Default.Close, null, tint = TextHint)
+                                        Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                             },
@@ -618,7 +619,7 @@ private fun AddAttractionSheet(
                             keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = TripBlue,
-                                unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
                             )
                         )
                         Spacer(Modifier.height(10.dp))
@@ -671,14 +672,14 @@ private fun AddAttractionSheet(
                                 Text(
                                     "No hotels available for this destination yet",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextSecondary,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     "Add a custom activity instead",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = TextHint,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                             }
@@ -689,9 +690,9 @@ private fun AddAttractionSheet(
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.SearchOff, null, tint = TextHint, modifier = Modifier.size(40.dp))
+                                Icon(Icons.Default.SearchOff, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(40.dp))
                                 Spacer(Modifier.height(8.dp))
-                                Text("No hotels match your search", style = MaterialTheme.typography.bodyMedium, color = TextHint)
+                                Text("No hotels match your search", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     } else {
@@ -772,7 +773,7 @@ private fun HotelPickerCard(
                     hotel.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (alreadyAdded) TextHint else TextPrimary,
+                    color = if (alreadyAdded) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -793,12 +794,12 @@ private fun HotelPickerCard(
                             )
                         }
                     } else {
-                        Surface(shape = RoundedCornerShape(5.dp), color = TextHint.copy(alpha = 0.12f)) {
+                        Surface(shape = RoundedCornerShape(5.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)) {
                             Text(
                                 hotel.type,
                                 modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -818,7 +819,7 @@ private fun HotelPickerCard(
                 Text(
                     hotel.address,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -889,13 +890,13 @@ private fun AttractionPickerCard(
                     attraction.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (alreadyAdded) TextHint else MaterialTheme.colorScheme.onSurface
+                    color = if (alreadyAdded) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
                     attraction.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -922,12 +923,12 @@ private fun AttractionPickerCard(
                         )
                     }
                     // Category chip
-                    Surface(shape = RoundedCornerShape(6.dp), color = TextHint.copy(alpha = 0.12f)) {
+                    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)) {
                         Text(
                             attraction.category.label,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -974,7 +975,7 @@ private fun CustomActivityForm(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Custom Activity – Day $day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("Custom Activity – Day $day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         OutlinedTextField(
             value = time,
             onValueChange = { time = it },
@@ -983,7 +984,7 @@ private fun CustomActivityForm(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = TextHint.copy(0.4f))
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline)
         )
         OutlinedTextField(
             value = activity,
@@ -993,7 +994,7 @@ private fun CustomActivityForm(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = TextHint.copy(0.4f))
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline)
         )
         OutlinedTextField(
             value = notes,
@@ -1001,7 +1002,7 @@ private fun CustomActivityForm(
             label = { Text("Notes (optional)") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = TextHint.copy(0.4f))
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = TripBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline)
         )
         Button(
             onClick = {
@@ -1076,7 +1077,7 @@ private fun DraggableItineraryItem(
         // Drag handle
         Icon(
             Icons.Default.DragHandle, null,
-            tint = if (isDragging) dayColor else TextHint.copy(alpha = 0.5f),
+            tint = if (isDragging) dayColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             modifier = Modifier.size(20.dp).padding(end = 4.dp)
         )
 
@@ -1094,9 +1095,9 @@ private fun DraggableItineraryItem(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(item.activity, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text(item.activity, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             if (item.notes.isNotEmpty()) {
-                Text(item.notes, style = MaterialTheme.typography.bodySmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(item.notes, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         // Up/down arrows (visible when dragging) or edit+delete buttons
@@ -1115,7 +1116,7 @@ private fun DraggableItineraryItem(
                     Icon(Icons.Default.Edit, null, tint = TripBlue.copy(alpha = 0.7f), modifier = Modifier.size(15.dp))
                 }
                 IconButton(onClick = onRemove, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.Delete, null, tint = TextHint, modifier = Modifier.size(15.dp))
+                    Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(15.dp))
                 }
             }
         }
@@ -1141,7 +1142,7 @@ private fun EditItineraryDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.EditNote, null, tint = TripBlue, modifier = Modifier.size(22.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Edit Activity", fontWeight = FontWeight.Bold)
+                Text("Edit Activity", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             }
         },
         text = {
@@ -1156,7 +1157,7 @@ private fun EditItineraryDialog(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = TripBlue,
-                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 OutlinedTextField(
@@ -1169,7 +1170,7 @@ private fun EditItineraryDialog(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = TripBlue,
-                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 OutlinedTextField(
@@ -1180,7 +1181,7 @@ private fun EditItineraryDialog(
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = TripBlue,
-                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
             }
@@ -1202,7 +1203,7 @@ private fun EditItineraryDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )
@@ -1248,12 +1249,17 @@ private fun ExpensePlanningTab(
     ) {
         // ── Header ────────────────────────────────────────────────────────
         item {
-            Text("Budget Planner", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                "Budget Planner",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             Spacer(Modifier.height(2.dp))
             Text(
                 "Your total budget has been split across categories. Adjust as needed — changes are saved with the trip.",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -1272,7 +1278,7 @@ private fun ExpensePlanningTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Total Budget", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                            Text("Total Budget", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 "$${"%.2f".format(totalBudget)}",
                                 style = MaterialTheme.typography.headlineSmall,
@@ -1281,7 +1287,7 @@ private fun ExpensePlanningTab(
                             )
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Remaining", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                            Text("Remaining", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 "$${"%.2f".format(remaining)}",
                                 style = MaterialTheme.typography.titleLarge,
@@ -1298,13 +1304,13 @@ private fun ExpensePlanningTab(
                             .height(8.dp)
                             .clip(RoundedCornerShape(50)),
                         color = barColor,
-                        trackColor = TextHint.copy(alpha = 0.18f)
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "$${"%.2f".format(allocatedTotal)} allocated of $${"%.2f".format(totalBudget)}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -1328,12 +1334,12 @@ private fun ExpensePlanningTab(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(cat.emoji, fontSize = 20.sp)
                             Spacer(Modifier.width(8.dp))
-                            Text(cat.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(cat.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                         }
                         Text(
                             "${"%.0f".format(catFraction * 100)}%",
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextHint
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Spacer(Modifier.height(8.dp))
@@ -1354,7 +1360,7 @@ private fun ExpensePlanningTab(
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = TripBlue,
-                            unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         )
                     )
                     Spacer(Modifier.height(6.dp))
@@ -1378,12 +1384,12 @@ private fun ExpensePlanningTab(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Info, null, tint = TextHint, modifier = Modifier.size(14.dp))
+                Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(6.dp))
                 Text(
                     "Tap \"Save Trip\" to persist your budget breakdown.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextHint
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
         }
@@ -1397,19 +1403,32 @@ private fun NotesTab(notes: String, onNotesChange: (String) -> Unit) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Trip Notes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(
+            "Trip Notes",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = notes,
             onValueChange = onNotesChange,
-            placeholder = { Text("Jot down anything — packing list, reminders, ideas...") },
+            placeholder = {
+                Text(
+                    "Jot down anything — packing list, reminders, ideas...",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.7f),
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = TripBlue,
-                unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                cursorColor = TripBlue
             )
         )
     }
@@ -1794,11 +1813,11 @@ private fun NearbyPlaceRow(place: com.tripsphere.domain.model.Place) {
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(place.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text(place.category, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Text(place.category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 "${place.distanceMeters}m away" + (if (place.address.isNotBlank()) " · ${place.address}" else ""),
                 style = MaterialTheme.typography.labelSmall,
-                color = TextHint,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 maxLines = 1
             )
         }

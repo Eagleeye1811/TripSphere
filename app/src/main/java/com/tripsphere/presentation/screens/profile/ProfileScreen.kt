@@ -26,11 +26,13 @@ import com.tripsphere.presentation.viewmodel.ProfileViewModel
 @Composable
 fun ProfileScreen(
     onNavigateToMyTrips: () -> Unit,
+    onNavigateToFavourites: () -> Unit,
     onLogout: () -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState        by viewModel.uiState.collectAsState()
+    val favouriteCount by viewModel.favouriteCount.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     if (showLogoutDialog) {
@@ -170,10 +172,11 @@ fun ProfileScreen(
                     onClick = onNavigateToMyTrips
                 )
                 ProfileMenuItem(
-                    icon = Icons.Default.BookmarkBorder,
-                    title = "Saved Places",
-                    subtitle = null,
-                    onClick = { }
+                    icon     = Icons.Default.Favorite,
+                    title    = "Favourites",
+                    subtitle = if (favouriteCount > 0) "$favouriteCount destination${if (favouriteCount == 1) "" else "s"} saved" else null,
+                    tintColor = Color(0xFFEF5350),
+                    onClick  = onNavigateToFavourites
                 )
                 ProfileMenuItem(
                     icon = Icons.Default.WorkspacePremium,

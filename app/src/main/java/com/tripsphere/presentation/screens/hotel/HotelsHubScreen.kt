@@ -147,6 +147,8 @@ fun HotelsHubScreen(
         Spacer(Modifier.height(10.dp))
 
         // ── City grid ─────────────────────────────────────────────────────────
+        val navBarBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
         if (filtered.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -160,8 +162,13 @@ fun HotelsHubScreen(
             }
         } else {
             LazyVerticalGrid(
-                columns             = GridCells.Fixed(2),
-                contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                columns               = GridCells.Fixed(2),
+                contentPadding        = PaddingValues(
+                    start  = 16.dp,
+                    end    = 16.dp,
+                    top    = 4.dp,
+                    bottom = 100.dp + navBarBottomPadding
+                ),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement   = Arrangement.spacedBy(12.dp),
                 modifier              = Modifier.fillMaxSize()
@@ -169,8 +176,6 @@ fun HotelsHubScreen(
                 items(filtered) { city ->
                     HotelCityCard(city = city, onClick = { onCitySelected(city.name, city.latitude, city.longitude) })
                 }
-                item { Spacer(Modifier.height(80.dp)) }  // bottom nav space
-                item { Spacer(Modifier.height(80.dp)) }
             }
         }
     }

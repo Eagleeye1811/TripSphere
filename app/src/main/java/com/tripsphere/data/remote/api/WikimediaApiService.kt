@@ -17,7 +17,7 @@ interface WikimediaApiService {
     suspend fun geoSearch(
         @Query("action")    action: String = "query",
         @Query("list")      list: String = "geosearch",
-        @Query("gscoord")   gsCoord: String,
+        @Query("gs coord")   gsCoord: String,
         @Query("gsradius")  gsRadius: Int = 10000,
         @Query("gslimit")   gsLimit: Int = 15,
         @Query("format")    format: String = "json"

@@ -1,14 +1,17 @@
 package com.tripsphere.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tripsphere.domain.model.Destination
 import com.tripsphere.domain.model.DestinationCategory
 import com.tripsphere.utils.DummyData
+import com.tripsphere.utils.FavouritesStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ExploreUiState(
@@ -21,13 +24,27 @@ data class ExploreUiState(
 )
 
 @HiltViewModel
-class ExploreViewModel @Inject constructor() : ViewModel() {
+class ExploreViewModel @Inject constructor(
+    private val favouritesStore: FavouritesStore
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExploreUiState())
     val uiState: StateFlow<ExploreUiState> = _uiState.asStateFlow()
 
+    private val _favouriteIds = MutableStateFlow<Set<Int>>(emptySet())
+    val favouriteIds: StateFlow<Set<Int>> = _favouriteIds.asStateFlow()
+
     init {
         loadDestinations(DestinationCategory.ALL)
+        viewModelScope.launch {
+            favouritesStore.favouriteIds.collect { ids ->
+                _favouriteIds.value = ids
+            }
+        }
+    }
+
+    fun toggleFavourite(id: Int) {
+        viewModelScope.launch { favouritesStore.toggle(id) }
     }
 
     fun onSearchQueryChange(query: String) {

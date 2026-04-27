@@ -101,7 +101,8 @@ fun ExploreScreen(
         }
     }
 
-    val allDests  = uiState.filteredDestinations
+    val allDests       = uiState.filteredDestinations
+    val favouriteIds   by viewModel.favouriteIds.collectAsState()
 
     // ── ALL mode rows (computed once per list change) ──────────────────────────
     val featuredDests     = remember(allDests) { allDests.sortedByDescending { it.rating }.take(6) }
@@ -164,13 +165,15 @@ fun ExploreScreen(
                 if (featuredDests.isNotEmpty()) {
                     item(key = "featured") {
                         SectionRow(
-                            title        = "✨ Featured",
-                            subtitle     = "The world's most breathtaking destinations",
-                            accentColor  = TripBlue,
-                            destinations = featuredDests,
-                            onItemClick  = onDestinationClick,
-                            cardWidth    = 200.dp,
-                            cardHeight   = 275.dp
+                            title              = "✨ Featured",
+                            subtitle           = "The world's most breathtaking destinations",
+                            accentColor        = TripBlue,
+                            destinations       = featuredDests,
+                            onItemClick        = onDestinationClick,
+                            cardWidth          = 200.dp,
+                            cardHeight         = 275.dp,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -178,11 +181,13 @@ fun ExploreScreen(
                 if (trendingDests.isNotEmpty()) {
                     item(key = "trending") {
                         SectionRow(
-                            title        = "🔥 Trending Now",
-                            subtitle     = "Most visited destinations globally",
-                            accentColor  = Color(0xFFFF5722),
-                            destinations = trendingDests,
-                            onItemClick  = onDestinationClick
+                            title              = "🔥 Trending Now",
+                            subtitle           = "Most visited destinations globally",
+                            accentColor        = Color(0xFFFF5722),
+                            destinations       = trendingDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -190,12 +195,14 @@ fun ExploreScreen(
                 if (beachDests.isNotEmpty()) {
                     item(key = "beaches") {
                         SectionRow(
-                            title        = "🏖️ Beach Escapes",
-                            subtitle     = "Sun, sea & sand at their finest",
-                            accentColor  = Color(0xFF00BCD4),
-                            destinations = beachDests,
-                            onItemClick  = onDestinationClick,
-                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.BEACH) }
+                            title              = "🏖️ Beach Escapes",
+                            subtitle           = "Sun, sea & sand at their finest",
+                            accentColor        = Color(0xFF00BCD4),
+                            destinations       = beachDests,
+                            onItemClick        = onDestinationClick,
+                            onSeeAll           = { viewModel.onCategorySelected(DestinationCategory.BEACH) },
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -203,12 +210,14 @@ fun ExploreScreen(
                 if (mountainDests.isNotEmpty()) {
                     item(key = "mountains") {
                         SectionRow(
-                            title        = "⛰️ Mountain Retreats",
-                            subtitle     = "Peaks, glaciers & high-altitude wonder",
-                            accentColor  = Color(0xFF4CAF50),
-                            destinations = mountainDests,
-                            onItemClick  = onDestinationClick,
-                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.MOUNTAIN) }
+                            title              = "⛰️ Mountain Retreats",
+                            subtitle           = "Peaks, glaciers & high-altitude wonder",
+                            accentColor        = Color(0xFF4CAF50),
+                            destinations       = mountainDests,
+                            onItemClick        = onDestinationClick,
+                            onSeeAll           = { viewModel.onCategorySelected(DestinationCategory.MOUNTAIN) },
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -216,12 +225,14 @@ fun ExploreScreen(
                 if (cityDests.isNotEmpty()) {
                     item(key = "cities") {
                         SectionRow(
-                            title        = "🏙️ City Breaks",
-                            subtitle     = "Culture, cuisine & iconic skylines",
-                            accentColor  = Color(0xFF9C27B0),
-                            destinations = cityDests,
-                            onItemClick  = onDestinationClick,
-                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.CITY) }
+                            title              = "🏙️ City Breaks",
+                            subtitle           = "Culture, cuisine & iconic skylines",
+                            accentColor        = Color(0xFF9C27B0),
+                            destinations       = cityDests,
+                            onItemClick        = onDestinationClick,
+                            onSeeAll           = { viewModel.onCategorySelected(DestinationCategory.CITY) },
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -229,12 +240,14 @@ fun ExploreScreen(
                 if (adventureDests.isNotEmpty()) {
                     item(key = "adventure") {
                         SectionRow(
-                            title        = "🧗 Adventure Awaits",
-                            subtitle     = "Expeditions that push every boundary",
-                            accentColor  = Color(0xFFFF7043),
-                            destinations = adventureDests,
-                            onItemClick  = onDestinationClick,
-                            onSeeAll     = { viewModel.onCategorySelected(DestinationCategory.ADVENTURE) }
+                            title              = "🧗 Adventure Awaits",
+                            subtitle           = "Expeditions that push every boundary",
+                            accentColor        = Color(0xFFFF7043),
+                            destinations       = adventureDests,
+                            onItemClick        = onDestinationClick,
+                            onSeeAll           = { viewModel.onCategorySelected(DestinationCategory.ADVENTURE) },
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -242,11 +255,13 @@ fun ExploreScreen(
                 if (luxuryDests.isNotEmpty()) {
                     item(key = "luxury") {
                         SectionRow(
-                            title        = "💎 Luxury Escapes",
-                            subtitle     = "Premium experiences without compromise",
-                            accentColor  = Color(0xFFFF8F00),
-                            destinations = luxuryDests,
-                            onItemClick  = onDestinationClick
+                            title              = "💎 Luxury Escapes",
+                            subtitle           = "Premium experiences without compromise",
+                            accentColor        = Color(0xFFFF8F00),
+                            destinations       = luxuryDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -254,11 +269,13 @@ fun ExploreScreen(
                 if (budgetDests.isNotEmpty()) {
                     item(key = "budget") {
                         SectionRow(
-                            title        = "💰 Budget Discoveries",
-                            subtitle     = "Incredible destinations, wallet-friendly prices",
-                            accentColor  = Color(0xFF388E3C),
-                            destinations = budgetDests,
-                            onItemClick  = onDestinationClick
+                            title              = "💰 Budget Discoveries",
+                            subtitle           = "Incredible destinations, wallet-friendly prices",
+                            accentColor        = Color(0xFF388E3C),
+                            destinations       = budgetDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -266,11 +283,13 @@ fun ExploreScreen(
                 if (hiddenGemsDests.isNotEmpty()) {
                     item(key = "hidden") {
                         SectionRow(
-                            title        = "🔮 Hidden Gems",
-                            subtitle     = "Off-the-beaten-path wonders worth seeking",
-                            accentColor  = Color(0xFF7C4DFF),
-                            destinations = hiddenGemsDests,
-                            onItemClick  = onDestinationClick
+                            title              = "🔮 Hidden Gems",
+                            subtitle           = "Off-the-beaten-path wonders worth seeking",
+                            accentColor        = Color(0xFF7C4DFF),
+                            destinations       = hiddenGemsDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -280,69 +299,74 @@ fun ExploreScreen(
                 val tab = categoryTabs.find { it.category == uiState.selectedCategory }
                 val tabColor = tab?.accentColor ?: TripBlue
 
-                // Top rated (all in this category) — wider cards
                 if (topRatedDests.isNotEmpty()) {
                     item(key = "cat_toprated") {
                         SectionRow(
-                            title        = "⭐ Top Rated ${tab?.label ?: ""}",
-                            subtitle     = "Highest-rated by verified travellers",
-                            accentColor  = tabColor,
-                            destinations = topRatedDests,
-                            onItemClick  = onDestinationClick,
-                            cardWidth    = 200.dp,
-                            cardHeight   = 275.dp
+                            title              = "⭐ Top Rated ${tab?.label ?: ""}",
+                            subtitle           = "Highest-rated by verified travellers",
+                            accentColor        = tabColor,
+                            destinations       = topRatedDests,
+                            onItemClick        = onDestinationClick,
+                            cardWidth          = 200.dp,
+                            cardHeight         = 275.dp,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
 
-                // Luxury within this category
                 if (luxuryCatDests.size >= 2) {
                     item(key = "cat_luxury") {
                         SectionRow(
-                            title        = "💎 Premium ${tab?.label ?: ""}",
-                            subtitle     = "Elevated experiences, exceptional quality",
-                            accentColor  = Color(0xFFFF8F00),
-                            destinations = luxuryCatDests,
-                            onItemClick  = onDestinationClick
+                            title              = "💎 Premium ${tab?.label ?: ""}",
+                            subtitle           = "Elevated experiences, exceptional quality",
+                            accentColor        = Color(0xFFFF8F00),
+                            destinations       = luxuryCatDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
 
-                // Mid-range within this category
                 if (midRangeCatDests.size >= 2) {
                     item(key = "cat_midrange") {
                         SectionRow(
-                            title        = "🌟 Best Value ${tab?.label ?: ""}",
-                            subtitle     = "Outstanding quality at a fair price",
-                            accentColor  = Color(0xFF1565C0),
-                            destinations = midRangeCatDests,
-                            onItemClick  = onDestinationClick
+                            title              = "🌟 Best Value ${tab?.label ?: ""}",
+                            subtitle           = "Outstanding quality at a fair price",
+                            accentColor        = Color(0xFF1565C0),
+                            destinations       = midRangeCatDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
 
-                // Budget within this category
                 if (budgetCatDests.size >= 2) {
                     item(key = "cat_budget") {
                         SectionRow(
-                            title        = "💰 Budget-Friendly ${tab?.label ?: ""}",
-                            subtitle     = "Great adventures without breaking the bank",
-                            accentColor  = Color(0xFF388E3C),
-                            destinations = budgetCatDests,
-                            onItemClick  = onDestinationClick
+                            title              = "💰 Budget-Friendly ${tab?.label ?: ""}",
+                            subtitle           = "Great adventures without breaking the bank",
+                            accentColor        = Color(0xFF388E3C),
+                            destinations       = budgetCatDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
 
-                // You may also like (other categories)
                 if (othersDests.isNotEmpty()) {
                     item(key = "cat_others") {
                         SectionRow(
-                            title        = "🌍 You May Also Like",
-                            subtitle     = "Explore beyond your current category",
-                            accentColor  = TripBlue,
-                            destinations = othersDests,
-                            onItemClick  = onDestinationClick
+                            title              = "🌍 You May Also Like",
+                            subtitle           = "Explore beyond your current category",
+                            accentColor        = TripBlue,
+                            destinations       = othersDests,
+                            onItemClick        = onDestinationClick,
+                            favouriteIds       = favouriteIds,
+                            onToggleFavourite  = viewModel::toggleFavourite
                         )
                     }
                 }
@@ -394,7 +418,9 @@ private fun SectionRow(
     onItemClick: (Int) -> Unit,
     onSeeAll: (() -> Unit)? = null,
     cardWidth: Dp  = 175.dp,
-    cardHeight: Dp = 248.dp
+    cardHeight: Dp = 248.dp,
+    favouriteIds: Set<Int> = emptySet(),
+    onToggleFavourite: (Int) -> Unit = {}
 ) {
     Column(modifier = Modifier.padding(top = 22.dp)) {
         // Section header
@@ -474,10 +500,12 @@ private fun SectionRow(
         ) {
             items(destinations, key = { it.id }) { dest ->
                 DestinationCard(
-                    destination = dest,
-                    width       = cardWidth,
-                    height      = cardHeight,
-                    onClick     = { onItemClick(dest.id) }
+                    destination      = dest,
+                    width            = cardWidth,
+                    height           = cardHeight,
+                    onClick          = { onItemClick(dest.id) },
+                    isFavourite      = dest.id in favouriteIds,
+                    onToggleFavourite = { onToggleFavourite(dest.id) }
                 )
             }
         }
@@ -491,9 +519,10 @@ private fun DestinationCard(
     destination: Destination,
     width: Dp,
     height: Dp,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isFavourite: Boolean = false,
+    onToggleFavourite: () -> Unit = {}
 ) {
-    var isLiked by remember { mutableStateOf(false) }
 
     val categoryColor = when (destination.category) {
         DestinationCategory.BEACH     -> Color(0xFF00BCD4)
@@ -559,18 +588,18 @@ private fun DestinationCard(
                 .size(34.dp)
                 .clip(CircleShape)
                 .background(
-                    if (isLiked) Color(0xFFEF5350).copy(alpha = 0.90f)
+                    if (isFavourite) Color(0xFFEF5350).copy(alpha = 0.90f)
                     else Color.Black.copy(alpha = 0.38f)
                 )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication        = null
-                ) { isLiked = !isLiked },
+                ) { onToggleFavourite() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector        = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = null,
+                imageVector        = if (isFavourite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = if (isFavourite) "Remove from favourites" else "Add to favourites",
                 tint               = Color.White,
                 modifier           = Modifier.size(17.dp)
             )

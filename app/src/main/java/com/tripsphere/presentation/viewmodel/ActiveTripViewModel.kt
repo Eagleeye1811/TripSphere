@@ -24,6 +24,7 @@ data class ActiveTripUiState(
     val todayItinerary: List<Itinerary> = emptyList(),
     val totalSpent: Double = 0.0,
     val budgetWarningLevel: Float = 0f,
+    val limitReachedEvent: Boolean = false,
     val error: String? = null
 )
 
@@ -34,6 +35,7 @@ class ActiveTripViewModel @Inject constructor(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val deleteExpenseUseCase: DeleteExpenseUseCase,
     private val getItineraryUseCase: GetItineraryUseCase,
+    private val updateTripUseCase: UpdateTripUseCase,
     private val notificationHelper: NotificationHelper
 ) : ViewModel() {
 
@@ -58,6 +60,10 @@ class ActiveTripViewModel @Inject constructor(
                 val total = expenses.sumOf { it.amount }
                 val budget = _uiState.value.trip?.budget ?: 1.0
                 val warningLevel = (total / budget).toFloat()
+                val prevWarningLevel = _uiState.value.budgetWarningLevel
+
+                // Show in-app limit dialog when first crossing 100%
+                val shouldTriggerLimitDialog = warningLevel >= 1f && prevWarningLevel < 1f
 
                 // Send notification at 80%, 90%, 100% thresholds
                 checkAndSendBudgetAlert(warningLevel, total, budget)
@@ -66,7 +72,8 @@ class ActiveTripViewModel @Inject constructor(
                     it.copy(
                         expenses = expenses,
                         totalSpent = total,
-                        budgetWarningLevel = warningLevel
+                        budgetWarningLevel = warningLevel,
+                        limitReachedEvent = if (shouldTriggerLimitDialog) true else it.limitReachedEvent
                     )
                 }
             }
@@ -131,6 +138,22 @@ class ActiveTripViewModel @Inject constructor(
         if (title.isBlank() || amount <= 0) return
         viewModelScope.launch {
             addExpenseUseCase(original.copy(title = title, amount = amount, category = category))
+        }
+    }
+
+    fun dismissLimitReached() {
+        _uiState.update { it.copy(limitReachedEvent = false) }
+    }
+
+    fun updateBudget(newBudget: Double) {
+        if (newBudget <= 0) return
+        val trip = _uiState.value.trip ?: return
+        viewModelScope.launch {
+            val updated = trip.copy(budget = newBudget)
+            updateTripUseCase(updated)
+            // Reset alert threshold so notifications fire again on the new budget
+            lastAlertedThreshold = 0f
+            _uiState.update { it.copy(trip = updated, limitReachedEvent = false) }
         }
     }
 }

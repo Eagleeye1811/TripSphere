@@ -30,7 +30,7 @@ class TripReminderWorker(
 
         val notification = NotificationCompat.Builder(applicationContext, NotificationHelper.TRIP_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Trip Reminder ✈️")
+            .setContentTitle("Trip Start ✈️")
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)

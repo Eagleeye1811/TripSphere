@@ -34,8 +34,10 @@ sealed class Screen(val route: String) {
     object HotelsTab : Screen("hotels_tab")
     // Itinerary planner entry screen
     object Planner : Screen("planner")
+    // Favourites
+    object Favourites : Screen("favourites")
 }
 
 val bottomNavScreens = listOf(
-    Screen.Home, Screen.Explore, Screen.MyTrips, Screen.HotelsTab, Screen.Profile
+    Screen.Home, Screen.Explore, Screen.MyTrips, Screen.HotelsTab
 )

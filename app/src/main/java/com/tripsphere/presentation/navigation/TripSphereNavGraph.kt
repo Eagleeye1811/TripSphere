@@ -14,6 +14,7 @@ import com.tripsphere.presentation.screens.auth.LoginScreen
 import com.tripsphere.presentation.screens.auth.SignUpScreen
 import com.tripsphere.presentation.screens.explore.DestinationDetailScreen
 import com.tripsphere.presentation.screens.explore.ExploreScreen
+import com.tripsphere.presentation.screens.explore.FavouritesScreen
 import com.tripsphere.presentation.screens.home.HomeScreen
 import com.tripsphere.presentation.screens.hotel.HotelsHubScreen
 import com.tripsphere.presentation.screens.hotel.HotelsScreen
@@ -316,13 +317,28 @@ fun TripSphereNavGraph(
 
         composable(Screen.Profile.route) {
             ProfileScreen(
-                onNavigateToMyTrips = { navController.navigate(Screen.MyTrips.route) },
+                onNavigateToMyTrips     = { navController.navigate(Screen.MyTrips.route) },
+                onNavigateToFavourites  = { navController.navigate(Screen.Favourites.route) },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Favourites.route) {
+            FavouritesScreen(
+                onDestinationClick  = { id ->
+                    navController.navigate(Screen.DestinationDetail.createRoute(id))
+                },
+                onNavigateBack      = { navController.popBackStack() },
+                onNavigateToExplore = {
+                    navController.navigate(Screen.Explore.route) {
+                        popUpTo(Screen.Favourites.route) { inclusive = true }
+                    }
+                }
             )
         }
     }

@@ -45,6 +45,7 @@ fun ActiveTripScreen(
     var showAddExpense by remember { mutableStateOf(false) }
     var expenseToEdit by remember { mutableStateOf<Expense?>(null) }
     var selectedCategoryFilter by remember { mutableStateOf<ExpenseCategory?>(null) }
+    var showEditBudget by remember { mutableStateOf(false) }
 
     LaunchedEffect(tripId) { viewModel.loadTrip(tripId) }
 
@@ -81,10 +82,34 @@ fun ActiveTripScreen(
         )
     }
 
+    if (showEditBudget) {
+        EditBudgetDialog(
+            currentBudget = trip.budget,
+            onDismiss = { showEditBudget = false },
+            onConfirm = { newBudget ->
+                viewModel.updateBudget(newBudget)
+                showEditBudget = false
+            }
+        )
+    }
+
+    // ── Limit reached overlay ─────────────────────────────────────────────────
+    if (uiState.limitReachedEvent) {
+        BudgetLimitReachedDialog(
+            spent = uiState.totalSpent,
+            budget = trip.budget,
+            onDismiss = { viewModel.dismissLimitReached() },
+            onIncreaseBudget = {
+                viewModel.dismissLimitReached()
+                showEditBudget = true
+            }
+        )
+    }
+
     // ── Budget warning banner ─────────────────────────────────────────────────
     val warningLevel = uiState.budgetWarningLevel
     val snackMessage = when {
-        warningLevel >= 1f -> "⚠️ Budget exceeded!"
+        warningLevel >= 1f -> "⚠️ Budget limit reached!"
         warningLevel >= 0.9f -> "⚠️ 90% of budget used!"
         warningLevel >= 0.8f -> "⚠️ 80% of budget used!"
         else -> null
@@ -123,12 +148,15 @@ fun ActiveTripScreen(
 
         // ── Warning banner ────────────────────────────────────────────────────
         if (snackMessage != null) {
-            Surface(modifier = Modifier.fillMaxWidth(), color = Warning.copy(alpha = 0.15f)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = if (warningLevel >= 1f) Error.copy(alpha = 0.18f) else Warning.copy(alpha = 0.15f)
+            ) {
                 Text(
                     snackMessage,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Warning,
+                    color = if (warningLevel >= 1f) Error else Warning,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -160,25 +188,50 @@ fun ActiveTripScreen(
                         Spacer(Modifier.height(16.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceAround
+                            horizontalArrangement = Arrangement.SpaceAround,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Total Budget", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(
-                                    "$${"%.0f".format(trip.budget)}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    "Total Budget",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        "$${"%.0f".format(trip.budget)}",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    IconButton(
+                                        onClick = { showEditBudget = true },
+                                        modifier = Modifier.size(22.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Edit budget limit",
+                                            tint = TripBlue,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Remaining", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    "Remaining",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                                 val remaining = trip.budget - uiState.totalSpent
                                 Text(
                                     "$${"%.0f".format(remaining.coerceAtLeast(0.0))}",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (remaining < 0) Error else Success
+                                    color = if (remaining <= 0) Error else Success
                                 )
                             }
                         }
@@ -193,7 +246,7 @@ fun ActiveTripScreen(
                         FilterChip(
                             selected = selectedCategoryFilter == null,
                             onClick = { selectedCategoryFilter = null },
-                            label = { Text("All") },
+                            label = { Text("All", color = if (selectedCategoryFilter == null) Color.White else MaterialTheme.colorScheme.onSurface) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = TripBlue,
                                 selectedLabelColor = Color.White
@@ -206,7 +259,12 @@ fun ActiveTripScreen(
                             onClick = {
                                 selectedCategoryFilter = if (selectedCategoryFilter == cat) null else cat
                             },
-                            label = { Text("${cat.emoji} ${cat.label}") },
+                            label = {
+                                Text(
+                                    "${cat.emoji} ${cat.label}",
+                                    color = if (selectedCategoryFilter == cat) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                            },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = TripBlue,
                                 selectedLabelColor = Color.White
@@ -222,14 +280,18 @@ fun ActiveTripScreen(
                     Text(
                         "Today's Itinerary",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 items(uiState.todayItinerary) { item ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = TripBlue.copy(alpha = 0.06f))
+                        colors = CardDefaults.cardColors(
+                            containerColor = TripBlue.copy(alpha = 0.12f),
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -238,8 +300,17 @@ fun ActiveTripScreen(
                             Icon(Icons.Default.Event, null, tint = TripBlue, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
                             Column {
-                                Text(item.activity, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                Text(item.time, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text(
+                                    item.activity,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    item.time,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
@@ -253,11 +324,16 @@ fun ActiveTripScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Expenses", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Expenses",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                     Text(
                         "${uiState.expenses.size} record${if (uiState.expenses.size != 1) "s" else ""}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -276,7 +352,7 @@ fun ActiveTripScreen(
                         Text(
                             "No expenses yet. Tap + to add!",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextHint
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -297,12 +373,17 @@ fun ActiveTripScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Info, null, tint = TextHint, modifier = Modifier.size(13.dp))
+                        Icon(
+                            Icons.Default.Info,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(13.dp)
+                        )
                         Spacer(Modifier.width(5.dp))
                         Text(
                             "Swipe left to delete · Long-press to edit",
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextHint
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
                     }
                 }
@@ -326,7 +407,7 @@ fun ActiveTripScreen(
             ) {
                 Icon(Icons.Default.Add, null, tint = Color.White)
                 Spacer(Modifier.width(8.dp))
-                Text("Add Expense", fontWeight = FontWeight.Bold)
+                Text("Add Expense", fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
@@ -388,10 +469,10 @@ private fun ExpenseItemCard(expense: Expense, onEdit: () -> Unit) {
     val categoryColors = mapOf(
         ExpenseCategory.FOOD to Color(0xFFFF6F00),
         ExpenseCategory.TRANSPORT to Color(0xFF1565C0),
-        ExpenseCategory.STAY to Color(0xFF6A1B9A),
-        ExpenseCategory.ACTIVITIES to Color(0xFF2E7D32),
+        ExpenseCategory.STAY to Color(0xFF7C4DFF),
+        ExpenseCategory.ACTIVITIES to Color(0xFF00BFA5),
         ExpenseCategory.SHOPPING to Color(0xFFC62828),
-        ExpenseCategory.OTHER to Color(0xFF37474F)
+        ExpenseCategory.OTHER to Color(0xFF78909C)
     )
     val color = categoryColors[expense.category] ?: TripBlue
 
@@ -403,7 +484,10 @@ private fun ExpenseItemCard(expense: Expense, onEdit: () -> Unit) {
             },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -411,7 +495,7 @@ private fun ExpenseItemCard(expense: Expense, onEdit: () -> Unit) {
         ) {
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = color.copy(alpha = 0.12f),
+                color = color.copy(alpha = 0.18f),
                 modifier = Modifier.size(44.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -420,11 +504,16 @@ private fun ExpenseItemCard(expense: Expense, onEdit: () -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(expense.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    expense.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Text(
                     "${expense.category.label} · ${expense.date}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -434,11 +523,10 @@ private fun ExpenseItemCard(expense: Expense, onEdit: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = color
                 )
-                // Edit hint icon
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = "Long-press to edit",
-                    tint = TextHint,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.size(13.dp).padding(top = 2.dp)
                 )
             }
@@ -480,7 +568,7 @@ private fun ExpenseFormDialog(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = TripBlue,
-                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 OutlinedTextField(
@@ -495,10 +583,10 @@ private fun ExpenseFormDialog(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = TripBlue,
-                        unfocusedBorderColor = TextHint.copy(alpha = 0.4f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
-                Text("Category", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                Text("Category", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 // Category grid — 3 columns
                 val categories = ExpenseCategory.values()
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -523,7 +611,7 @@ private fun ExpenseFormDialog(
                                         Text(
                                             cat.label,
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = if (selected) Color.White else TextSecondary
+                                            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -548,7 +636,162 @@ private fun ExpenseFormDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = TextSecondary) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Edit budget limit dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditBudgetDialog(
+    currentBudget: Double,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit
+) {
+    var input by remember { mutableStateOf(if (currentBudget > 0) "%.0f".format(currentBudget) else "") }
+    val isValid = input.toDoubleOrNull()?.let { it > 0 } == true
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.Edit, null, tint = TripBlue, modifier = Modifier.size(22.dp))
+                Text("Set Budget Limit", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Enter your total budget for this trip. Expenses will be tracked from \$0 up to this limit.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    label = { Text("Budget ($)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    ),
+                    singleLine = true,
+                    isError = input.isNotEmpty() && !isValid,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TripBlue,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+                if (input.isNotEmpty() && !isValid) {
+                    Text(
+                        "Please enter a valid amount greater than 0",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { input.toDoubleOrNull()?.let { onConfirm(it) } },
+                enabled = isValid,
+                colors = ButtonDefaults.buttonColors(containerColor = TripBlue),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Set Limit", fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Budget limit reached dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun BudgetLimitReachedDialog(
+    spent: Double,
+    budget: Double,
+    onDismiss: () -> Unit,
+    onIncreaseBudget: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(Error.copy(alpha = 0.15f), RoundedCornerShape(32.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🚨", fontSize = 30.sp)
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Budget Limit Reached!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Error,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    "You've spent $${"%.0f".format(spent)} — your full budget of $${"%.0f".format(budget)} has been used up.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Warning.copy(alpha = 0.12f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "💡 Consider reviewing your expenses or increasing the budget limit.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Warning,
+                        modifier = Modifier.padding(12.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onIncreaseBudget,
+                colors = ButtonDefaults.buttonColors(containerColor = TripBlue),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Edit, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Increase Budget", fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text("Got it, I'll review expenses", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     )
 }
@@ -604,9 +847,13 @@ private fun BudgetRing(spent: Double, total: Double, modifier: Modifier = Modifi
             Text(
                 "${(percent * 100).toInt()}% of budget",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text("Spent", style = MaterialTheme.typography.labelSmall, color = TextHint)
+            Text(
+                "Spent",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
         }
     }
 }
